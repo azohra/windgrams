@@ -1,10 +1,10 @@
 {
-  "firstForecastHour": 2,
-  "forecastHours": 30,
-  "generatedAt": "2026-08-07T19:44:56.913Z",
-  "lastForecastHour": 40,
+  "firstForecastHour": 14,
+  "forecastHours": 26,
+  "generatedAt": "2026-08-08T08:28:07.780Z",
+  "lastForecastHour": 48,
   "model": "HRDPS West 1 km",
-  "referenceTime": "2026-08-07T12:00:00Z",
+  "referenceTime": "2026-08-08T00:00:00Z",
   "sites": [
     {
       "name": "Dundee",
@@ -24,9 +24,9 @@
     }
   ],
   "stats": {
-    "downloadBytes": 1206198233,
-    "downloads": 1621,
-    "durationMs": 475397,
-    "retries": 0
+    "downloadBytes": 1071384937,
+    "downloads": 1408,
+    "durationMs": 1881245,
+    "retries": 3
   }
 }
