@@ -1,0 +1,18 @@
+[project]
+name = "windgrams"
+version = "2.0.0"
+description = "Soaring windgram profiles for paragliding launches, derived from ECCC HRDPS and published as JSON."
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "eccodes>=2.47.0",
+    "eccodeslib>=2.48.0.26",
+    "requests>=2.32",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

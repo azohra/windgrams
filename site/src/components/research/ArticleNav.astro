@@ -1,0 +1,84 @@
+---
+import type { DocPage } from "../../lib/research";
+
+interface Props {
+  current: DocPage;
+  entries: DocPage[];
+}
+
+const { current, entries } = Astro.props;
+const index = entries.findIndex((entry) => entry.slug === current.slug);
+const previous = index > 0 ? entries[index - 1] : null;
+const next = index >= 0 && index < entries.length - 1 ? entries[index + 1] : null;
+---
+
+<nav class="article-nav" aria-label="Research article navigation">
+  {
+    previous ? (
+      <a href={previous.url} class="article-nav-link previous">
+        <span class="article-nav-direction">← Previous</span>
+        <span class="article-nav-title">{previous.title}</span>
+      </a>
+    ) : (
+      <span />
+    )
+  }
+  {
+    next && (
+      <a href={next.url} class="article-nav-link next">
+        <span class="article-nav-direction">Next →</span>
+        <span class="article-nav-title">{next.title}</span>
+      </a>
+    )
+  }
+</nav>
+
+<style>
+  .article-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    width: min(920px, calc(100vw - 48px));
+    margin: 72px 50% 0;
+    padding-top: 22px;
+    transform: translateX(-50%);
+    border-top: 1px solid var(--rule);
+  }
+  .article-nav-link {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--ink);
+  }
+  .article-nav-link.next {
+    text-align: right;
+  }
+  .article-nav-direction {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .article-nav-title {
+    font-family: var(--display);
+    font-size: 19px;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+  .article-nav-link:hover {
+    text-decoration: none;
+  }
+  .article-nav-link:hover .article-nav-title {
+    color: var(--accent-strong);
+  }
+  @media (max-width: 560px) {
+    .article-nav {
+      grid-template-columns: 1fr;
+    }
+    .article-nav-link.next {
+      text-align: left;
+    }
+  }
+</style>

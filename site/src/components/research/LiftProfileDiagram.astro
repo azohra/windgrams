@@ -1,0 +1,134 @@
+<figure class="lift-profile" aria-labelledby="lift-profile-title lift-profile-caption">
+  <div class="profile-copy">
+    <h3 id="lift-profile-title">Average profile versus strongest-core profile</h3>
+    <p>
+      At the same example sink threshold, the coefficient alone moves the upper crossing from
+      inside the boundary layer to above it.
+    </p>
+    <div class="formula-pair">
+      <span><i class="average-key"></i><b>1.34</b> average profile</span>
+      <span><i class="core-key"></i><b>4.0</b> core profile</span>
+    </div>
+  </div>
+  <div class="mobile-readout" aria-label="Threshold crossings shown in the chart">
+    <p><span class="average-mark">Average profile</span><strong><b>0.66 D</b><small>upper crossing</small></strong></p>
+    <p><span class="core-mark">Strongest-core profile</span><strong><b>1.08 D</b><small>upper crossing</small></strong></p>
+    <p><span class="threshold-mark">Example threshold</span><strong><b>0.55</b><small>sink / w*</small></strong></p>
+  </div>
+  <div class="profile-chart" tabindex="0" aria-label="Scrollable normalized updraft-profile chart">
+  <svg viewBox="0 0 520 430" role="img" aria-label="Updraft profiles by relative boundary-layer height, showing the core curve crossing a sink threshold higher than the average curve">
+    <g class="grid">
+      <line x1="78" y1="350" x2="478" y2="350" />
+      <line x1="78" y1="264" x2="478" y2="264" />
+      <line x1="78" y1="178" x2="478" y2="178" />
+      <line x1="78" y1="92" x2="478" y2="92" />
+      <line x1="78" y1="49" x2="478" y2="49" />
+    </g>
+    <line x1="78" y1="350" x2="478" y2="350" class="axis" />
+    <line x1="78" y1="350" x2="78" y2="40" class="axis" />
+
+    <!-- normalized example threshold; actual position changes with the hour's w* -->
+    <line x1="177" y1="350" x2="177" y2="40" class="threshold" />
+    <rect x="185" y="302" width="145" height="38" class="label-scrim" />
+    <text x="191" y="317" class="annotation">sink / w* = 0.55</text>
+    <text x="191" y="332" class="annotation">example threshold</text>
+
+    <!-- z/D = 1 boundary-layer top -->
+    <line x1="78" y1="92" x2="478" y2="92" class="bl-top" />
+    <rect x="328" y="72" width="144" height="19" class="label-scrim" />
+    <text x="468" y="85" text-anchor="end" class="bl-label">boundary-layer top (D)</text>
+
+    <!-- curves sampled from coefficient × (z/D)⅓ × (1 − 0.8z/D) -->
+    <path d="M78.0,350.0 L147.1,343.6 L163.3,337.1 L173.6,330.6 L181.0,324.2 L186.5,317.8 L190.8,311.3 L194.0,304.9 L196.5,298.4 L198.3,291.9 L199.6,285.5 L200.3,279.1 L200.7,272.6 L200.7,266.1 L200.4,259.7 L199.8,253.2 L198.8,246.8 L197.7,240.4 L196.3,233.9 L194.7,227.4 L192.9,221.0 L190.9,214.5 L188.7,208.1 L186.3,201.7 L183.8,195.2 L181.1,188.8 L178.3,182.3 L175.3,175.9 L172.2,169.4 L169.0,163.0 L165.7,156.5 L162.2,150.1 L158.6,143.6 L154.9,137.1 L151.1,130.7 L147.2,124.2 L143.2,117.8 L139.1,111.4 L134.9,104.9 L130.6,98.5 L126.2,92.0 L121.8,85.6 L117.2,79.1 L112.6,72.7 L107.9,66.2 L103.1,59.8 L98.2,53.3 L93.3,46.8 L88.3,40.4" class="average-line" />
+    <path d="M78.0,350.0 L284.3,343.6 L332.6,337.1 L363.4,330.6 L385.5,324.2 L402.0,317.8 L414.7,311.3 L424.3,304.9 L431.7,298.4 L437.1,291.9 L440.9,285.5 L443.2,279.1 L444.3,272.6 L444.3,266.1 L443.3,259.7 L441.4,253.2 L438.7,246.8 L435.3,240.4 L431.1,233.9 L426.3,227.4 L420.9,221.0 L414.9,214.5 L408.4,208.1 L401.3,201.7 L393.8,195.2 L385.8,188.8 L377.4,182.3 L368.5,175.9 L359.3,169.4 L349.7,163.0 L339.7,156.5 L329.3,150.1 L318.6,143.6 L307.6,137.1 L296.3,130.7 L284.6,124.2 L272.6,117.8 L260.4,111.4 L247.9,104.9 L235.1,98.5 L222.0,92.0 L208.7,85.6 L195.1,79.1 L181.3,72.7 L167.2,66.2 L152.9,59.8 L138.3,53.3 L123.6,46.8 L108.6,40.4" class="core-line" />
+
+    <circle cx="177" cy="172" r="4" class="average-dot" />
+    <line x1="177" y1="172" x2="216" y2="172" class="callout" />
+    <text x="222" y="169" class="annotation">average: 0.66 D</text>
+    <text x="222" y="184" class="annotation subtle">upper threshold crossing</text>
+
+    <circle cx="177" cy="71" r="4" class="core-dot" />
+    <line x1="177" y1="71" x2="216" y2="55" class="callout" />
+    <text x="222" y="52" class="annotation">core: 1.08 D</text>
+    <text x="222" y="67" class="annotation subtle">upper threshold crossing</text>
+
+    <g class="axis-text">
+      <text x="66" y="354" text-anchor="end">0</text>
+      <text x="66" y="268" text-anchor="end">0.33</text>
+      <text x="66" y="182" text-anchor="end">0.67</text>
+      <text x="66" y="96" text-anchor="end">1.0</text>
+      <text x="66" y="53" text-anchor="end">1.17</text>
+      <text x="278" y="402" text-anchor="middle">UPDRAFT / w* →</text>
+      <text transform="translate(18 196) rotate(-90)" text-anchor="middle">HEIGHT / D →</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption id="lift-profile-caption">
+    Schematic, not a forecast trace. The horizontal position is updraft normalized by w*; the
+    crossing depends on the hour’s actual w* and the 1 m/s sink criterion.
+  </figcaption>
+</figure>
+
+<style>
+  .lift-profile {
+    width: min(920px, calc(100vw - 48px));
+    margin: 28px 50% 44px;
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: minmax(230px, 0.78fr) minmax(400px, 1.22fr);
+    gap: 24px;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+  }
+  .profile-copy { align-self: center; }
+  .profile-copy h3 {
+    margin: 0 0 12px;
+    font-family: var(--display);
+    font-size: 25px;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .profile-copy > p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+  .formula-pair { display: grid; gap: 8px; margin-top: 20px; }
+  .formula-pair span { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--ink-mute); }
+  .formula-pair i { width: 22px; border-top: 2px solid; }
+  .formula-pair b { color: var(--ink); }
+  .average-key { border-color: var(--model-1); }
+  .core-key { border-color: var(--accent); }
+  .mobile-readout { display: none; }
+  .profile-chart { min-width: 0; overflow-x: auto; scrollbar-color: var(--accent) var(--surface-raised); }
+  svg { display: block; width: 100%; height: auto; }
+  .grid line { stroke: var(--rule); stroke-width: 1; }
+  .axis { stroke: var(--ink-mute); stroke-width: 1.2; }
+  .threshold { stroke: var(--status-serious); stroke-width: 1.25; stroke-dasharray: 5 4; }
+  .bl-top { stroke: var(--ink-soft); stroke-width: 1; stroke-dasharray: 2 5; }
+  .average-line, .core-line { fill: none; stroke-width: 2.5; }
+  .average-line { stroke: var(--model-1); }
+  .average-line { stroke-dasharray: 7 4; }
+  .core-line { stroke: var(--accent); }
+  .average-dot { fill: var(--model-1); }
+  .core-dot { fill: var(--accent); }
+  .callout { stroke: var(--ink-mute); stroke-width: 1; }
+  .label-scrim { fill: var(--surface); opacity: 0.95; }
+  .annotation, .bl-label, .axis-text { font-family: var(--mono); font-size: 12px; fill: var(--ink); }
+  .annotation.subtle, .bl-label, .axis-text { fill: var(--ink-mute); }
+  figcaption { grid-column: 1 / -1; margin: -2px 0 0; font-family: var(--mono); font-size: 12px; color: var(--ink-mute); }
+  @media (max-width: 760px) {
+    .lift-profile { width: min(100%, calc(100vw - 32px)); grid-template-columns: 1fr; gap: 16px; padding: 17px; }
+    .profile-copy h3 { font-size: 24px; }
+    .mobile-readout { display: grid; gap: 6px; padding-block: 2px 7px; border-bottom: 1px solid var(--rule); }
+    .mobile-readout p { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; margin: 0; font: 11px/1.35 var(--mono); color: var(--ink-mute); }
+    .mobile-readout p span { color: var(--ink); }
+    .mobile-readout p strong { display: grid; justify-items: end; font-weight: 400; }
+    .mobile-readout p b { font-size: 14px; color: var(--ink); }
+    .mobile-readout p small { font-size: 10px; white-space: nowrap; }
+    .mobile-readout span::before { content: ""; display: inline-block; width: 18px; margin-right: 7px; border-top: 2px solid; vertical-align: .2em; }
+    .mobile-readout .average-mark::before { border-color: var(--model-1); border-top-style: dashed; }
+    .mobile-readout .core-mark::before { border-color: var(--accent); }
+    .mobile-readout .threshold-mark::before { border-color: var(--status-serious); border-top-style: dashed; }
+    .profile-chart { margin-inline: -4px; }
+    .profile-chart::before { content: "Scroll chart horizontally →"; display: block; margin: 2px 4px 4px; font: 10.5px var(--mono); color: var(--ink-mute); }
+    svg { width: 520px; max-width: none; }
+  }
+</style>

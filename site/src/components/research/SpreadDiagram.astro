@@ -1,0 +1,128 @@
+---
+// Schematic small multiples for the ensemble column-ceiling case. Nine
+// representative traces stand in for the same 21-member ensemble in both
+// panels. The paths are illustrative; the censoring relationship is literal.
+---
+
+<figure class="spread-diagram" aria-labelledby="spread-title spread-caption">
+  <header>
+    <h3 id="spread-title">A short pressure column censors ensemble spread</h3>
+  </header>
+
+  <div class="spread-panels">
+    <section aria-labelledby="short-column-title">
+      <div class="panel-heading">
+        <h4 id="short-column-title">Three pressure levels</h4>
+        <span>column top ≈ 3,150 m</span>
+      </div>
+      <svg viewBox="0 0 350 270" role="img" aria-label="Nine ensemble traces rise together and flatten against the same short-column ceiling">
+        <line x1="38" y1="48" x2="326" y2="48" class="ceiling" />
+        <text x="38" y="38" class="ceiling-label">SOURCE DATA END HERE</text>
+
+        <path d="M38,224 C84,222 114,164 144,104 C164,72 179,50 194,48 L326,48" class="member" />
+        <path d="M38,228 C86,224 118,170 148,110 C168,76 182,51 196,48 L326,48" class="member" />
+        <path d="M38,220 C82,218 112,158 142,100 C162,69 178,49 193,48 L326,48" class="member" />
+        <path d="M38,226 C85,223 116,167 146,107 C166,74 180,50 195,48 L326,48" class="member" />
+        <path d="M38,222 C83,220 113,161 143,102 C163,70 179,49 194,48 L326,48" class="member" />
+        <path d="M38,230 C87,226 120,173 150,113 C170,79 184,52 198,48 L326,48" class="member" />
+        <path d="M38,218 C81,216 111,155 141,97 C161,67 177,48 192,48 L326,48" class="member" />
+        <path d="M38,232 C88,228 122,176 152,116 C172,82 186,53 200,48 L326,48" class="member" />
+        <path d="M38,224 C84,221 115,165 145,105 C165,73 180,50 195,48 L326,48" class="member" />
+
+        <line x1="252" y1="48" x2="252" y2="66" class="measure" />
+        <path d="M245 66 h14" class="measure" />
+        <text x="252" y="84" text-anchor="middle" class="measure-label">apparent spread ≈ 16 m</text>
+
+        <line x1="38" y1="236" x2="326" y2="236" class="ground" />
+        <text x="38" y="258" class="axis-label">MORNING</text>
+        <text x="326" y="258" text-anchor="end" class="axis-label">AFTERNOON</text>
+      </svg>
+      <p class="panel-reading"><strong>Censored.</strong> Every trace stops at the highest supplied level. The tight result measures the input ceiling.</p>
+    </section>
+
+    <section aria-labelledby="deep-column-title">
+      <div class="panel-heading">
+        <h4 id="deep-column-title">Column extended to 500 hPa</h4>
+        <span>headroom above 3,150 m</span>
+      </div>
+      <svg viewBox="0 0 350 270" role="img" aria-label="The same nine ensemble traces separate after the pressure column is extended to 500 hectopascals">
+        <line x1="38" y1="88" x2="326" y2="88" class="old-ceiling" />
+        <text x="326" y="80" text-anchor="end" class="old-ceiling-label">FORMER CEILING</text>
+
+        <path d="M182,70 C212,42 252,26 326,22 L326,80 C252,76 212,74 182,82 Z" class="spread-band" />
+
+        <path d="M38,224 C84,222 114,164 144,104 C176,56 246,28 326,24" class="member" />
+        <path d="M38,228 C86,224 118,170 148,114 C180,70 250,40 326,36" class="member" />
+        <path d="M38,220 C82,218 112,158 142,98 C174,48 244,24 326,22" class="member" />
+        <path d="M38,226 C85,223 116,167 146,110 C178,64 248,36 326,32" class="member" />
+        <path d="M38,222 C83,220 113,161 143,101 C175,52 245,28 326,26" class="member" />
+        <path d="M38,230 C87,226 120,173 150,120 C182,78 252,48 326,44" class="member" />
+        <path d="M38,218 C81,216 111,155 141,94 C173,44 243,22 326,18" class="member" />
+        <path d="M38,232 C88,228 122,176 152,126 C184,86 254,58 326,54" class="member" />
+        <path d="M38,224 C84,221 115,165 145,107 C177,60 247,32 326,28" class="member" />
+        <path d="M38,225 C84,222 115,164 145,106 C177,58 247,31 326,28" class="median" />
+
+        <line x1="312" y1="22" x2="312" y2="54" class="measure" />
+        <path d="M305 22 h14 M305 54 h14" class="measure" />
+        <text x="296" y="102" text-anchor="end" class="measure-label">resolved member range</text>
+
+        <line x1="38" y1="236" x2="326" y2="236" class="ground" />
+        <text x="38" y="258" class="axis-label">MORNING</text>
+        <text x="326" y="258" text-anchor="end" class="axis-label">AFTERNOON</text>
+      </svg>
+      <p class="panel-reading"><strong>Resolved.</strong> With vertical headroom, the same members separate. The range can now describe model disagreement.</p>
+    </section>
+  </div>
+
+  <figcaption id="spread-caption">
+    Nine representative traces from the 21-member ensemble. Shapes are illustrative; the short-column
+    ceiling and the added 500 hPa level reproduce the censoring test.
+  </figcaption>
+</figure>
+
+<style>
+  .spread-diagram {
+    width: min(900px, calc(100vw - 32px));
+    margin: 24px 50% 36px;
+    transform: translateX(-50%);
+    color: var(--ink);
+    border-top: 3px solid var(--ink);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  header { padding: 17px 0 15px; }
+  h3 { margin: 0; font: 700 28px/1 var(--display); text-transform: uppercase; }
+  .spread-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--rule); background: var(--surface); }
+  section { min-width: 0; padding: 15px 14px 13px; }
+  section + section { border-left: 1px solid var(--rule); }
+  .panel-heading { min-height: 46px; display: flex; justify-content: space-between; align-items: baseline; gap: 14px; }
+  h4 { margin: 0; font: 700 15px/1.1 var(--display); text-transform: uppercase; }
+  .panel-heading span { font: 10.5px/1.25 var(--mono); color: var(--ink-mute); text-align: right; }
+  svg { display: block; width: 100%; height: auto; }
+  .member { fill: none; stroke: var(--ink-mute); stroke-width: 1.2; opacity: .76; vector-effect: non-scaling-stroke; }
+  .median { fill: none; stroke: var(--accent); stroke-width: 2.4; vector-effect: non-scaling-stroke; }
+  .spread-band { fill: var(--accent); opacity: .14; stroke: none; }
+  .ceiling { stroke: var(--lapse-hot); stroke-width: 1.8; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; }
+  .old-ceiling { stroke: var(--ink-mute); stroke-width: 1.2; stroke-dasharray: 2 5; vector-effect: non-scaling-stroke; }
+  .ceiling-label, .old-ceiling-label, .measure-label, .axis-label { font-family: var(--mono); }
+  .ceiling-label { fill: var(--lapse-hot); font-size: 11px; font-weight: 700; letter-spacing: .04em; }
+  .old-ceiling-label { fill: var(--ink-mute); font-size: 11px; letter-spacing: .04em; }
+  .ground { stroke: var(--ink-mute); stroke-width: 1.8; vector-effect: non-scaling-stroke; }
+  .measure { fill: none; stroke: var(--ink); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+  .measure-label { fill: var(--ink); font-size: 11px; font-weight: 700; }
+  .axis-label { fill: var(--ink-mute); font-size: 10.5px; letter-spacing: .04em; }
+  .panel-reading { margin: 4px 2px 0; font-size: 12px; line-height: 1.45; color: var(--ink-soft); }
+  .panel-reading strong { color: var(--ink); }
+  figcaption { padding: 10px 0 12px; font: 12px/1.5 var(--mono); color: var(--ink-mute); }
+  @media (max-width: 640px) {
+    h3 { font-size: 25px; }
+    .spread-panels { grid-template-columns: 1fr; }
+    section { padding: 15px 11px 14px; }
+    section + section { border-left: 0; border-top: 1px solid var(--rule); }
+    .panel-heading { min-height: 42px; }
+    h4 { font-size: 16px; }
+    .panel-heading span { font-size: 11px; }
+    .ceiling-label, .old-ceiling-label, .measure-label { font-size: 12px; }
+    .axis-label { font-size: 11.5px; }
+    .panel-reading { font-size: 13px; }
+  }
+</style>

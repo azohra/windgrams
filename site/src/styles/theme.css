@@ -1,0 +1,346 @@
+/* Field paper — warm surfaces, dark mineral ink, and rules that remain
+   visible without relying on shadows. Text and structural colour pairs meet
+   WCAG AA contrast; chart code reads the data hues at render time. */
+
+:root {
+  color-scheme: light;
+
+  --page: #f4efe4;
+  --surface: #fffdf8;
+  --surface-raised: #efe4d3;
+  --surface-sunken: #e1d3c0;
+  --surface-accent: #f2dcc1;
+  --ink: #152529;
+  --ink-soft: #2f454a;
+  --ink-mute: #40565a;
+  --rule: #776956;
+  --rule-strong: #51483e;
+  --accent: #913b0c;
+  --accent-strong: #743008;
+  --accent-ink: #fffdf8;
+  --dawn: #a94718;
+
+  /* data encoding — one fixed set, chart-only, never themed */
+  --lapse-hot: #8f302a;
+  --lapse-mid: #52676c;
+  --lapse-cold: #1f5f9b;
+  --model-1: #1f5f9b;
+  --model-2: #9a480d;
+  --model-3: #16694f;
+  --model-4: #805500;
+  --model-5: #934568;
+  --model-6: #3f7028;
+  --chart-pressure: #963f36;
+  --chart-rain: #207a83;
+  --chart-cloud: #5b6969;
+  --chart-lift: #9a7500;
+  --chart-usable: #2179ad;
+  --chart-boundary: #a46b10;
+  --chart-wind: #355963;
+  --chart-freezing: #2b748f;
+  --status-good: #286326;
+  --status-warning: #805500;
+  --status-serious: #913b0c;
+  --status-critical: #8f302a;
+
+  /* stability palette — discrete 8-class lapse-rate classification for the
+     windgram fill, warmest (most unstable) to coldest (strongest inversion).
+     A single diverging ramp — muted brick/amber (kin to --accent) through a
+     warm-cool neutral pivot to slate blue (kin to --surface/--rule) — not
+     eight unrelated hues. Reads as one instrument's readout, not a sticker
+     sheet. Order matches ascending lapseCPer1000Ft thresholds: very-unstable
+     <= -3, unstable <= -2.5, conditional-strong <= -2, conditional <= -1.5,
+     near-neutral <= -1.2, stable <= 0, inverted <= 0.5, strong-inversion > 0.5. */
+  --stab-very-unstable: #d95f52;
+  --stab-unstable: #d98243;
+  --stab-conditional-strong: #c48abd;
+  --stab-conditional: #aaa0cf;
+  --stab-near-neutral: #d7b29b;
+  --stab-stable: #768bb9;
+  --stab-inverted: #b3b9b6;
+  --stab-strong-inversion: #858d89;
+
+  --display: "Big Shoulders", "Arial Narrow", sans-serif;
+  --sans: "IBM Plex Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--page);
+  color: var(--ink);
+}
+body {
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(circle at 82% 9%, rgb(31 95 155 / 0.08), transparent 25rem),
+    radial-gradient(circle at 18% 2%, rgb(145 59 12 / 0.07), transparent 22rem);
+  background-repeat: no-repeat;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.shell {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 28px 100px;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 24px;
+  max-width: 1188px;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--rule);
+}
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.wordmark svg {
+  height: 22px;
+  width: auto;
+  color: var(--accent);
+}
+.site-nav {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.site-nav a {
+  color: var(--ink-soft);
+}
+.site-nav a:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+.site-nav a[aria-current="page"] {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.site-footer {
+  border-top: 1px solid var(--rule);
+  padding: 28px 24px 60px;
+  max-width: 1188px;
+  margin: 0 auto;
+  font-size: 12.5px;
+  color: var(--ink-mute);
+}
+.site-footer a {
+  color: var(--ink-mute);
+}
+
+/* docs prose */
+.prose {
+  /* 784 px of text at the desktop maximum: wide enough to use the page,
+     still short enough for comfortable line tracking at 18 px. Figures
+     retain their 900–1,080 px breakout widths in their component styles. */
+  max-width: 840px;
+  font-size: 18px;
+  line-height: 1.68;
+  padding-top: 28px;
+}
+.prose h1 {
+  font-size: clamp(42px, 6vw, 64px);
+  letter-spacing: 0;
+  margin: 0 0 18px;
+  line-height: 0.98;
+}
+.prose h2 {
+  font-size: 30px;
+  margin: 58px 0 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  color: var(--accent-strong);
+}
+.prose h3 {
+  font-family: var(--sans);
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 19px;
+  margin: 28px 0 8px;
+}
+.prose .back-link {
+  margin: 0 0 2px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.035em;
+}
+.prose p,
+.prose li {
+  color: var(--ink-soft);
+}
+.prose p {
+  margin: 0 0 20px;
+}
+/* Lede: the paragraph right after the H1 gets read first and sets the
+   register for the whole page, so it earns brighter ink and more air than
+   the body copy that follows — pure typography, no content change. Tagged
+   explicitly in docs.ts rather than matched by position, since a table of
+   contents or comparison grid can land between the H1 and this paragraph. */
+.prose .doc-lede {
+  font-size: 22px;
+  line-height: 1.58;
+  color: var(--ink);
+  margin: 4px 0 30px;
+}
+.prose ul,
+.prose ol {
+  margin: 0 0 20px;
+  padding-left: 25px;
+}
+.prose li {
+  margin-bottom: 8px;
+}
+.prose li:last-child {
+  margin-bottom: 0;
+}
+.prose li > ul,
+.prose li > ol {
+  margin-top: 8px;
+}
+.prose strong {
+  color: var(--ink);
+}
+.prose code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  background: var(--surface-sunken);
+  padding: 1px 5px;
+  border-radius: 2px;
+  color: var(--ink);
+}
+.prose pre {
+  background: var(--surface-sunken);
+  border: 1px solid var(--rule);
+  border-top: 2px solid var(--rule);
+  border-radius: 2px;
+  padding: 16px 18px;
+  margin: 20px 0;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+.prose a {
+  color: var(--accent);
+}
+.prose blockquote {
+  font-family: var(--sans);
+  font-size: 20px;
+  line-height: 1.5;
+  font-weight: 500;
+  font-style: italic;
+  border-left: 2px solid var(--rule);
+  margin: 28px 0;
+  padding: 2px 0 2px 18px;
+  color: var(--ink);
+}
+.prose blockquote p {
+  margin: 0;
+}
+.prose table {
+  width: 100%;
+  margin: 22px 0 30px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.prose th,
+.prose td {
+  padding: 9px 11px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+}
+.prose thead th {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.prose tbody td {
+  color: var(--ink-soft);
+}
+.prose hr {
+  margin: 48px 0;
+  border: 0;
+  border-top: 1px solid var(--rule);
+}
+/* Figures without their own breakout rule use the same wider visual measure
+   as the other research diagrams instead of inheriting the prose column. */
+.prose > figure.home-windgram.view-full,
+.prose > figure.sp-diagram {
+  width: min(920px, calc(100vw - 48px));
+  margin: 28px 50% 44px;
+  transform: translateX(-50%);
+}
+@media (max-width: 560px) {
+  .shell {
+    padding-inline: 18px;
+  }
+  .site-header {
+    padding-inline: 18px;
+  }
+  .prose {
+    font-size: 17px;
+    line-height: 1.64;
+  }
+  .prose .doc-lede {
+    font-size: 19px;
+    line-height: 1.58;
+  }
+  .prose > figure.home-windgram.view-full,
+  .prose > figure.sp-diagram {
+    width: calc(100vw - 32px);
+  }
+}

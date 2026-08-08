@@ -1,0 +1,179 @@
+---
+interface Props {
+  defaultCompare?: boolean;
+}
+
+const { defaultCompare = false } = Astro.props;
+
+// The interactive windgram renderer. The markup and behaviour are the app's
+// (lib/app.ts); this component
+// only hosts it. Styles are global under .wg-app because the app creates its
+// own DOM (day tabs, status lines) at runtime, which Astro-scoped selectors
+// would never match.
+---
+
+<div class="wg-app" data-default-compare={String(defaultCompare)}>
+  <div class="controls">
+    <label class="control">
+      <span>Launch</span>
+      <select id="site-select"></select>
+    </label>
+    <label class="control">
+      <span>Model</span>
+      <select id="model-select"></select>
+    </label>
+    <label class="control checkbox">
+      <input type="checkbox" id="overlay-toggle" />
+      <span>Compare all models</span>
+    </label>
+  </div>
+
+  <div id="day-tabs" class="day-tabs" aria-label="Day"></div>
+  <div class="meta-row">
+    <span id="freshness" class="freshness"></span>
+    <span id="hour-readout" class="hour-readout"></span>
+  </div>
+  <div id="status" role="status" aria-live="polite" class="status"></div>
+
+  <p class="chart-label selected-chart-label">Selected model</p>
+  <figure class="chart-figure selected-chart">
+    <div id="chart-mount"></div>
+  </figure>
+
+  <section id="overlay-section" aria-label="Model comparison" hidden>
+    <p class="chart-label">Inter-model range</p>
+    <div id="overlay-status" class="status"></div>
+    <figure class="chart-figure">
+      <div id="overlay-mount"></div>
+    </figure>
+  </section>
+</div>
+
+<script src="../../lib/app.ts"></script>
+
+<style is:global>
+  .wg-app {
+    width: min(1040px, calc(100vw - 32px));
+    margin: 28px 50% 42px;
+    padding: 22px;
+    transform: translateX(-50%);
+    background: var(--surface-sunken);
+    border: 1px solid var(--rule);
+  }
+  .wg-app .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .wg-app .control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .wg-app .control select {
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 7px 9px;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+  }
+  .wg-app .control.checkbox {
+    flex-direction: row;
+    align-items: center;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 14px;
+    color: var(--ink);
+    margin-top: 18px;
+  }
+  .wg-app .day-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .wg-app .day-tab {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    padding: 6px 12px;
+    background: var(--surface-sunken);
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .wg-app .day-tab.active {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+  .wg-app .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+    margin-bottom: 4px;
+  }
+  .wg-app .freshness {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--ink-mute);
+  }
+  .wg-app .hour-readout {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+  .wg-app .freshness[data-status="warning"] {
+    color: var(--status-warning);
+  }
+  .wg-app .status {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    min-height: 1.4em;
+    margin: 6px 0;
+  }
+  .wg-app .chart-figure {
+    margin: 14px 0;
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 12px;
+  }
+  .wg-app .chart-label {
+    margin: 14px 0 0;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .wg-app[data-comparing="true"] > .selected-chart-label,
+  .wg-app[data-comparing="true"] > .selected-chart {
+    display: none;
+  }
+  .wg-app #chart-mount {
+    min-width: 0;
+  }
+  @media (max-width: 620px) {
+    .wg-app {
+      padding: 14px;
+    }
+  }
+  .wg-app #overlay-section {
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+  }
+  .wg-app[data-comparing="true"] #overlay-section {
+    margin-top: 8px;
+    padding-top: 0;
+    border-top: 0;
+  }
+</style>

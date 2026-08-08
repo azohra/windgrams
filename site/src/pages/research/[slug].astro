@@ -1,0 +1,235 @@
+---
+import Base from "../../layouts/Base.astro";
+import { researchArticles, splitBeforeHeading, type DocPage } from "../../lib/research";
+import ArticleMeta from "../../components/research/ArticleMeta.astro";
+import ArticleNav from "../../components/research/ArticleNav.astro";
+import DocToc from "../../components/research/DocToc.astro";
+import DerivationFlow from "../../components/research/DerivationFlow.astro";
+import FailureAtlas from "../../components/research/FailureAtlas.astro";
+import LiftProfileDiagram from "../../components/research/LiftProfileDiagram.astro";
+import ModelHorizonChart from "../../components/research/ModelHorizonChart.astro";
+import PipelineDiagram from "../../components/research/PipelineDiagram.astro";
+import TransportScale from "../../components/research/TransportScale.astro";
+import SpreadDiagram from "../../components/research/SpreadDiagram.astro";
+import MemberAccounting from "../../components/research/MemberAccounting.astro";
+import InteractiveChart from "../../components/research/InteractiveChart.astro";
+import HomeWindgram from "../../components/research/HomeWindgram.astro";
+import WindBarbGuide from "../../components/research/WindBarbGuide.astro";
+import PressureTendency from "../../components/research/PressureTendency.astro";
+import StabilityGuide from "../../components/research/StabilityGuide.astro";
+import MoistureSignals from "../../components/research/MoistureSignals.astro";
+import MoisturePrecipCase from "../../components/research/MoisturePrecipCase.astro";
+
+export function getStaticPaths() {
+  return researchArticles().map((doc) => ({ params: { slug: doc.slug }, props: { doc } }));
+}
+
+const { doc } = Astro.props;
+const entries = researchArticles();
+
+// The markdown in research/*.md is the single source of truth. This decides
+// where diagrams, the table of contents, and the live chart enter the
+// rendered HTML, anchored to stable heading ids.
+type Part =
+  | { type: "html"; value: string }
+  | { type: "toc" }
+  | { type: "derivation" }
+  | { type: "failures" }
+  | { type: "lift-profile" }
+  | { type: "horizons" }
+  | { type: "pipeline" }
+  | { type: "transport-scale" }
+  | { type: "spread" }
+  | { type: "member-accounting" }
+  | { type: "chart"; defaultCompare?: boolean }
+  | { type: "windgram-detail"; view: "full" | "lines" }
+  | { type: "wind-barbs" }
+  | { type: "pressure" }
+  | { type: "stability-guide" }
+  | { type: "moisture-signals" }
+  | { type: "moisture-precip" };
+
+function buildParts(doc: DocPage): Part[] {
+  if (doc.slug === "reading-a-windgram") {
+    const [intro, fromFirstPass] = splitBeforeHeading(
+      doc.html,
+      "check-lift-climb-limits-wind-surface-forcing-and-pressure",
+    );
+    const [firstPass, fromLayers] = splitBeforeHeading(
+      fromFirstPass,
+      "pressure-precipitation-cloud-and-w-use-separate-scales",
+    );
+    const [layers, fromPressure] = splitBeforeHeading(fromLayers, "read-pressure-as-a-tendency");
+    const [pressure, fromStability] = splitBeforeHeading(
+      fromPressure,
+      "read-the-stability-scale-against-a-rising-parcel",
+    );
+    const [stability, fromMoisture] = splitBeforeHeading(
+      fromStability,
+      "separate-cloud-cover-cloud-base-and-cross-hatching",
+    );
+    const [moisture, fromPrecipitation] = splitBeforeHeading(
+      fromMoisture,
+      "precipitation-is-not-automatically-rain",
+    );
+    const [precipitation, fromLines] = splitBeforeHeading(
+      fromPrecipitation,
+      "boundary-layer-top-usable-lift-top-and-cloud-base-answer-different-questions",
+    );
+    const [lines, fromWind] = splitBeforeHeading(fromLines, "wind-barbs-read-the-flight-band");
+    const [wind, remainder] = splitBeforeHeading(fromWind, "what-the-chart-cannot-decide");
+    return [
+      { type: "html", value: intro },
+      { type: "windgram-detail", view: "full" },
+      { type: "html", value: firstPass },
+      { type: "html", value: layers },
+      { type: "html", value: pressure },
+      { type: "pressure" },
+      { type: "html", value: stability },
+      { type: "stability-guide" },
+      { type: "html", value: moisture },
+      { type: "moisture-signals" },
+      { type: "html", value: precipitation },
+      { type: "moisture-precip" },
+      { type: "html", value: lines },
+      { type: "windgram-detail", view: "lines" },
+      { type: "html", value: wind },
+      { type: "wind-barbs" },
+      { type: "html", value: remainder },
+    ];
+  }
+
+  if (doc.slug === "windgram-derivations") {
+    const [intro, body] = splitBeforeHeading(doc.html, "required-surface-and-pressure-level-fields");
+    return [
+      { type: "html", value: intro },
+      { type: "derivation" },
+      { type: "toc" },
+      { type: "html", value: body },
+    ];
+  }
+
+  if (doc.slug === "usable-lift-and-boundary-layer") {
+    const [beforeDiagram, afterDiagram] = splitBeforeHeading(
+      doc.html,
+      "why-usable-lift-top-can-cross-boundary-layer-top",
+    );
+    return [
+      { type: "html", value: beforeDiagram },
+      { type: "lift-profile" },
+      { type: "html", value: afterDiagram },
+    ];
+  }
+
+  if (doc.slug === "static-forecast-pipeline") {
+    const [intro, body] = splitBeforeHeading(
+      doc.html,
+      "each-model-builder-follows-the-same-run-contract",
+    );
+    const [throughTransportIntro, transportDetails] = splitBeforeHeading(
+      body,
+      "grib-index-byte-ranges",
+    );
+    return [
+      { type: "html", value: intro },
+      { type: "pipeline" },
+      { type: "toc" },
+      { type: "html", value: throughTransportIntro },
+      { type: "transport-scale" },
+      { type: "html", value: transportDetails },
+    ];
+  }
+
+  if (doc.slug === "forecast-data-validation-failures") {
+    const [intro, body] = splitBeforeHeading(doc.html, "a-wcs-crop-sampled-the-wrong-cells");
+    return [
+      { type: "html", value: intro },
+      { type: "failures" },
+      { type: "toc" },
+      { type: "html", value: body },
+    ];
+  }
+
+  if (doc.slug === "ensemble-spread") {
+    const [beforeCeiling, fromCeiling] = splitBeforeHeading(
+      doc.html,
+      "the-column-ceiling-and-500-hpa",
+    );
+    const [ceilingSection, afterCeiling] = splitBeforeHeading(
+      fromCeiling,
+      "read-spread-in-this-order",
+    );
+    return [
+      { type: "html", value: beforeCeiling },
+      { type: "member-accounting" },
+      { type: "html", value: ceilingSection },
+      { type: "spread" },
+      { type: "html", value: afterCeiling },
+    ];
+  }
+
+  if (doc.slug === "choosing-forecast-models") {
+    const [intro, body] = splitBeforeHeading(
+      doc.html,
+      "choose-by-lead-time-and-required-terrain-detail",
+    );
+    return [
+      { type: "html", value: intro },
+      { type: "horizons" },
+      { type: "html", value: body },
+      { type: "chart", defaultCompare: true },
+    ];
+  }
+
+  return [{ type: "html", value: doc.html }];
+}
+
+const parts = buildParts(doc);
+---
+
+<Base title={`${doc.title} — Windgrams`} description={doc.dek} activeNav="research">
+  <main class="shell prose">
+    <p class="back-link"><a href="/">&larr; Research</a></p>
+    <ArticleMeta doc={doc} />
+    {
+      parts.map((part) =>
+        part.type === "html" ? (
+          <Fragment set:html={part.value} />
+        ) : part.type === "toc" ? (
+          <DocToc toc={doc.toc} />
+        ) : part.type === "derivation" ? (
+          <DerivationFlow />
+        ) : part.type === "failures" ? (
+          <FailureAtlas />
+        ) : part.type === "lift-profile" ? (
+          <LiftProfileDiagram />
+        ) : part.type === "horizons" ? (
+          <ModelHorizonChart />
+        ) : part.type === "pipeline" ? (
+          <PipelineDiagram />
+        ) : part.type === "transport-scale" ? (
+          <TransportScale />
+        ) : part.type === "spread" ? (
+          <SpreadDiagram />
+        ) : part.type === "member-accounting" ? (
+          <MemberAccounting />
+        ) : part.type === "chart" ? (
+          <InteractiveChart defaultCompare={part.defaultCompare} />
+        ) : part.type === "windgram-detail" ? (
+          <HomeWindgram view={part.view} />
+        ) : part.type === "wind-barbs" ? (
+          <WindBarbGuide />
+        ) : part.type === "pressure" ? (
+          <PressureTendency />
+        ) : part.type === "stability-guide" ? (
+          <StabilityGuide />
+        ) : part.type === "moisture-signals" ? (
+          <MoistureSignals />
+        ) : part.type === "moisture-precip" ? (
+          <MoisturePrecipCase />
+        ) : null,
+      )
+    }
+    <ArticleNav current={doc} entries={entries} />
+  </main>
+</Base>

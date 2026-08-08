@@ -1,0 +1,288 @@
+---
+const domainMin = 1_000;
+const domainMax = 10_000_000_000;
+
+const position = (bytes: number) =>
+  ((Math.log10(bytes) - Math.log10(domainMin)) /
+    (Math.log10(domainMax) - Math.log10(domainMin))) *
+  100;
+
+const rows = [
+  {
+    kind: "Typical response",
+    name: "WCS crop",
+    value: "≈ 2 KB",
+    bytes: 2_000,
+    detail: "One site-sized coverage response.",
+    tone: "crop",
+    edge: true,
+  },
+  {
+    kind: "Measured build total",
+    name: "HRDPS 2.5 km",
+    value: "≈ 6 MB",
+    bytes: 6_000_000,
+    detail: "All cropped responses transferred by one measured build.",
+    tone: "build",
+  },
+  {
+    kind: "Source object",
+    name: "HRRR pressure file",
+    value: "≈ 546 MB",
+    bytes: 546_000_000,
+    detail: "The builder reads indexed byte ranges instead of the whole file.",
+    tone: "avoided",
+  },
+  {
+    kind: "Whole-domain transfer",
+    name: "HRDPS West 1 km",
+    value: "≈ 1.2 GB",
+    bytes: 1_200_000_000,
+    detail: "No suitable crop or record index; the builder downloads the domain.",
+    tone: "whole",
+  },
+].map((row) => ({ ...row, position: position(row.bytes) }));
+
+const ticks = [
+  { bytes: 1_000, label: "1 KB", edge: "start" },
+  { bytes: 1_000_000, label: "1 MB" },
+  { bytes: 1_000_000_000, label: "1 GB" },
+  { bytes: 10_000_000_000, label: "10 GB", edge: "end" },
+].map((tick) => ({ ...tick, position: position(tick.bytes) }));
+---
+
+<figure class="transport-scale" aria-labelledby="transport-title transport-caption">
+  <header>
+    <h3 id="transport-title">Byte scale from WCS crop to whole-domain transfer</h3>
+    <div class="scale-explainer">
+      Each grid interval is a tenfold increase. The rows compare byte scale—not request count—across
+      a response, a measured build total, a source file, and a whole-domain transfer.
+    </div>
+  </header>
+
+  <div class="axis-wrap" aria-hidden="true">
+    <span class="axis-name">log<sub>10</sub>(bytes)</span>
+    <div class="axis-track">
+      {ticks.map((tick) => (
+        <span
+          class:list={["axis-tick", tick.edge && `edge-${tick.edge}`]}
+          style={`--position:${tick.position}%`}
+        >
+          {tick.label}
+        </span>
+      ))}
+    </div>
+  </div>
+
+  <ol class="scale-rows">
+    {rows.map((row) => (
+      <li class={`scale-row tone-${row.tone}`}>
+        <div class="row-copy">
+          <span class="row-kind">{row.kind}</span>
+          <strong>{row.name}</strong>
+          <span>{row.detail}</span>
+        </div>
+        <div class="byte-track" aria-hidden="true">
+          <span class="magnitude" style={`--position:${row.position}%`}>
+            <i></i>
+          </span>
+          <b
+            class:list={["value-label", row.edge && "edge-start"]}
+            style={`--position:${row.position}%`}
+          >
+            {row.value}
+          </b>
+        </div>
+      </li>
+    ))}
+  </ol>
+
+  <div class="transport-rule">
+    <strong>Selective reads change the transfer unit.</strong>
+    <span>
+      WCS turns a model field into kilobyte crops. HRRR indexes let the builder request records inside
+      a 546 MB file. The 1 km HRDPS feed offers neither option, so its transfer remains whole-domain.
+    </span>
+  </div>
+
+  <figcaption id="transport-caption">
+    Approximate decimal byte sizes. The HRRR value is the published source-file size, not the bytes
+    transferred by the range-reading builder.
+  </figcaption>
+</figure>
+
+<style>
+  .transport-scale {
+    width: min(980px, calc(100vw - 32px));
+    margin: 28px 50% 44px;
+    transform: translateX(-50%);
+    color: var(--ink);
+    border-top: 3px solid var(--ink);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  header {
+    display: grid;
+    grid-template-columns: minmax(310px, 0.9fr) minmax(360px, 1.1fr);
+    gap: 38px;
+    align-items: end;
+    padding: 18px 0 17px;
+  }
+  h3 {
+    margin: 0;
+    font: 700 29px/1 var(--display);
+    text-transform: uppercase;
+  }
+  .scale-explainer {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  .axis-wrap {
+    margin-left: 284px;
+    padding: 11px 0 24px;
+    border-top: 1px solid var(--rule);
+  }
+  .axis-name {
+    display: block;
+    margin-bottom: 9px;
+    font: 11px/1 var(--mono);
+    color: var(--ink-mute);
+  }
+  .axis-name sub { font-size: 8px; }
+  .axis-track,
+  .byte-track {
+    position: relative;
+    background-image: repeating-linear-gradient(
+      to right,
+      var(--rule) 0,
+      var(--rule) 1px,
+      transparent 1px,
+      transparent calc(100% / 7)
+    );
+  }
+  .axis-track {
+    height: 1px;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  .axis-tick {
+    position: absolute;
+    top: 7px;
+    left: var(--position);
+    transform: translateX(-50%);
+    font: 11px/1 var(--mono);
+    white-space: nowrap;
+    color: var(--ink-mute);
+  }
+  .axis-tick.edge-start { transform: none; }
+  .axis-tick.edge-end { transform: translateX(-100%); }
+  .scale-rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  .scale-row {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 24px;
+    align-items: center;
+    padding: 15px 16px;
+  }
+  .scale-row + .scale-row { border-top: 1px solid var(--rule); }
+  .row-copy {
+    display: grid;
+    gap: 3px;
+  }
+  .row-kind {
+    font: 10.5px/1.2 var(--mono);
+    letter-spacing: 0.065em;
+    text-transform: uppercase;
+    color: var(--row-color);
+  }
+  .row-copy strong {
+    font: 700 19px/1.05 var(--display);
+    text-transform: uppercase;
+  }
+  .row-copy > span:last-child {
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--ink-soft);
+  }
+  .byte-track {
+    height: 48px;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  .magnitude {
+    position: absolute;
+    right: calc(100% - var(--position));
+    bottom: -1px;
+    left: 0;
+    height: 4px;
+    background: var(--row-color);
+  }
+  .magnitude i {
+    position: absolute;
+    right: -5px;
+    bottom: -3px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--row-color);
+    border-radius: 50%;
+    background: var(--surface);
+  }
+  .tone-avoided .magnitude {
+    height: 0;
+    border-top: 2px dashed var(--row-color);
+    background: none;
+  }
+  .value-label {
+    position: absolute;
+    top: 7px;
+    left: var(--position);
+    transform: translateX(-50%);
+    font: 600 12px/1 var(--mono);
+    white-space: nowrap;
+    color: var(--ink);
+  }
+  .value-label.edge-start { transform: none; }
+  .tone-crop { --row-color: var(--model-3); }
+  .tone-build { --row-color: var(--model-1); }
+  .tone-avoided { --row-color: var(--ink-mute); }
+  .tone-whole { --row-color: var(--accent); }
+  .transport-rule {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 24px;
+    padding: 15px 16px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    border-left: 1px solid var(--rule);
+    background: var(--surface-accent);
+  }
+  .transport-rule strong {
+    font: 700 17px/1.15 var(--display);
+    text-transform: uppercase;
+  }
+  .transport-rule span {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  figcaption {
+    padding: 11px 0 13px;
+    font: 12px/1.5 var(--mono);
+    color: var(--ink-mute);
+  }
+  @media (max-width: 680px) {
+    header { grid-template-columns: 1fr; gap: 8px; }
+    h3 { font-size: 26px; }
+    .scale-explainer { font-size: 13.5px; }
+    .axis-wrap { margin-left: 0; padding-top: 13px; }
+    .scale-row { grid-template-columns: 1fr; gap: 10px; padding: 14px 12px 16px; }
+    .row-copy strong { font-size: 20px; }
+    .row-copy > span:last-child { font-size: 13px; }
+    .byte-track { height: 42px; }
+    .transport-rule { grid-template-columns: 1fr; gap: 7px; padding: 14px 12px; }
+  }
+</style>

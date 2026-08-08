@@ -1,0 +1,1064 @@
+---
+import exampleProfile from "./forecast-example.json";
+
+interface Level {
+  cloud: boolean;
+  dewPointDepressionC: number;
+  heightM: number;
+  lapseCPer1000Ft: number | null;
+  pressureHpa: number;
+  temperatureC: number;
+  windDirectionDeg: number;
+  windSpeedKmh: number;
+}
+
+interface Hour {
+  boundaryLayerTopM: number | null;
+  cloudBaseM: number | null;
+  cloudCoverPercent: number;
+  levels: Level[];
+  precipitationMm: number;
+  pressureKpa: number;
+  surfaceTemperatureC: number;
+  thermalVelocityMs: number;
+  usableLiftTopM: number | null;
+  validAt: string;
+  windDirectionDeg: number;
+  windSpeedKmh: number;
+}
+
+interface Profile {
+  hours: Hour[];
+  model: string;
+  modelElevationM: number;
+  referenceTime: string;
+  siteAltitudeM: number | null;
+  siteName: string;
+}
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+type WindgramView = "full" | "metrics" | "stability" | "lines";
+
+interface Props {
+  view?: WindgramView;
+}
+
+const { view = "full" } = Astro.props;
+
+// A fixed forecast makes the article reproducible: the prose, full example,
+// and focused views always describe the same atmospheric column.
+const profile = exampleProfile as Profile;
+const localParts = new Intl.DateTimeFormat("en-CA", {
+  day: "2-digit",
+  hour: "2-digit",
+  hourCycle: "h23",
+  month: "2-digit",
+  timeZone: "America/Vancouver",
+  year: "numeric",
+});
+const displayDate = new Intl.DateTimeFormat("en-CA", {
+  day: "numeric",
+  month: "short",
+  timeZone: "America/Vancouver",
+  year: "numeric",
+});
+
+function localFields(value: string) {
+  return Object.fromEntries(
+    localParts.formatToParts(new Date(value)).map((part) => [part.type, part.value]),
+  );
+}
+
+function dateKey(hour: Hour) {
+  const fields = localFields(hour.validAt);
+  return `${fields.year}-${fields.month}-${fields.day}`;
+}
+
+function localHour(hour: Hour) {
+  return localFields(hour.validAt).hour;
+}
+
+const days = new Map<string, Hour[]>();
+for (const hour of profile.hours) {
+  const clockHour = Number(localHour(hour));
+  if (clockHour < 7 || clockHour > 21) continue;
+  const key = dateKey(hour);
+  days.set(key, [...(days.get(key) ?? []), hour]);
+}
+const hours = [...days.values()]
+  .sort((left, right) => right.length - left.length)[0]
+  .sort((left, right) => Date.parse(left.validAt) - Date.parse(right.validAt));
+const highlightedIndex = hours.reduce(
+  (best, hour, index) =>
+    hour.thermalVelocityMs > hours[best].thermalVelocityMs ? index : best,
+  0,
+);
+const highlighted = hours[highlightedIndex];
+const dayLabel = displayDate.format(new Date(hours[0].validAt));
+
+const width = 620;
+const left = 68;
+const right = 76;
+const plotWidth = width - left - right;
+const bandTop = 18;
+const bandHeight = 23;
+const bandGap = 5;
+const profileTop = 146;
+const profileBottom = 408;
+const plotHeight = profileBottom - profileTop;
+const timeLabelY = 432;
+const height = 448;
+const columnWidth = plotWidth / hours.length;
+const x = (index: number) => left + (index + 0.5) * columnWidth;
+
+const floor = profile.modelElevationM;
+const observedTop = Math.max(
+  ...hours.flatMap((hour) => [
+    ...hour.levels.map((level) => level.heightM),
+    hour.cloudBaseM ?? floor,
+    hour.usableLiftTopM ?? floor,
+  ]),
+);
+const ceiling = Math.ceil(observedTop / 500) * 500;
+const y = (altitudeM: number) =>
+  profileBottom - ((altitudeM - floor) / (ceiling - floor)) * plotHeight;
+
+function short(value: number) {
+  return Number(value.toFixed(2));
+}
+
+function curvedPath(points: Point[]) {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M${short(points[0].x)},${short(points[0].y)}`;
+  if (points.length === 2) {
+    return `M${short(points[0].x)},${short(points[0].y)} L${short(points[1].x)},${short(points[1].y)}`;
+  }
+  let result = `M${short(points[0].x)},${short(points[0].y)}`;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const previous = points[Math.max(0, index - 1)];
+    const current = points[index];
+    const next = points[index + 1];
+    const following = points[Math.min(points.length - 1, index + 2)];
+    const firstControl = {
+      x: current.x + (next.x - previous.x) / 6,
+      y: current.y + (next.y - previous.y) / 6,
+    };
+    const secondControl = {
+      x: next.x - (following.x - current.x) / 6,
+      y: next.y - (following.y - current.y) / 6,
+    };
+    result += ` C${short(firstControl.x)},${short(firstControl.y)} ${short(secondControl.x)},${short(secondControl.y)} ${short(next.x)},${short(next.y)}`;
+  }
+  return result;
+}
+
+function segmentedPath(value: (hour: Hour) => number | null) {
+  const paths: string[] = [];
+  let segment: Point[] = [];
+  for (let index = 0; index <= hours.length; index += 1) {
+    const reading = index < hours.length ? value(hours[index]) : null;
+    if (reading != null && Number.isFinite(reading)) {
+      segment.push({ x: x(index), y: y(reading) });
+      continue;
+    }
+    if (segment.length > 0) paths.push(curvedPath(segment));
+    segment = [];
+  }
+  return paths.join(" ");
+}
+
+function metricPath(values: number[], top: number, minimum: number, maximum: number) {
+  const bottom = top + bandHeight;
+  const range = Math.max(0.001, maximum - minimum);
+  return curvedPath(
+    values.map((value, index) => ({
+      x: x(index),
+      y: bottom - ((value - minimum) / range) * bandHeight,
+    })),
+  );
+}
+
+const pressureValues = hours.map((hour) => hour.pressureKpa);
+const pressureMin = Math.floor(Math.min(...pressureValues) * 10) / 10;
+const pressureMax = Math.ceil(Math.max(...pressureValues) * 10) / 10;
+const bandDefinitions = [
+  {
+    className: "pressure",
+    label: "Pressure",
+    maximum: Math.max(pressureMin + 0.1, pressureMax),
+    minimum: pressureMin,
+    unit: "kPa",
+    values: pressureValues,
+  },
+  {
+    className: "rain",
+    label: "Precip",
+    maximum: Math.max(0.5, ...hours.map((hour) => hour.precipitationMm)),
+    minimum: 0,
+    unit: "mm",
+    values: hours.map((hour) => hour.precipitationMm),
+  },
+  {
+    className: "cloud",
+    label: "Cloud",
+    maximum: 100,
+    minimum: 0,
+    unit: "%",
+    values: hours.map((hour) => hour.cloudCoverPercent),
+  },
+  {
+    className: "lift",
+    label: "w*",
+    maximum: Math.max(3, ...hours.map((hour) => hour.thermalVelocityMs)),
+    minimum: 0,
+    unit: "m/s",
+    values: hours.map((hour) => hour.thermalVelocityMs),
+  },
+].map((band, index) => {
+  const top = bandTop + index * (bandHeight + bandGap);
+  const line = metricPath(band.values, top, band.minimum, band.maximum);
+  return {
+    ...band,
+    area: `${line} L${short(x(hours.length - 1))},${top + bandHeight} L${short(x(0))},${top + bandHeight} Z`,
+    line,
+    top,
+  };
+});
+
+function lapseNodes(hour: Hour) {
+  const levels = [...hour.levels].sort((a, b) => a.heightM - b.heightM);
+  const first = levels[0];
+  if (!first || first.heightM <= floor) return [];
+  const surfaceLapse =
+    ((first.temperatureC - hour.surfaceTemperatureC) / (first.heightM - floor)) * 304.8;
+  let lastLapse = surfaceLapse;
+  const nodes = [{ altitudeM: floor, value: surfaceLapse }];
+  for (const level of levels) {
+    if (level.lapseCPer1000Ft != null) lastLapse = level.lapseCPer1000Ft;
+    nodes.push({ altitudeM: level.heightM, value: lastLapse });
+  }
+  return nodes;
+}
+
+const lapseByHour = hours.map(lapseNodes);
+
+function interpolateVertical(nodes: Array<{ altitudeM: number; value: number }>, altitudeM: number) {
+  if (
+    nodes.length === 0 ||
+    altitudeM < nodes[0].altitudeM ||
+    altitudeM > nodes[nodes.length - 1].altitudeM
+  ) {
+    return null;
+  }
+  for (let index = 0; index < nodes.length - 1; index += 1) {
+    const lower = nodes[index];
+    const upper = nodes[index + 1];
+    if (altitudeM > upper.altitudeM) continue;
+    const fraction = (altitudeM - lower.altitudeM) / (upper.altitudeM - lower.altitudeM);
+    return lower.value + (upper.value - lower.value) * fraction;
+  }
+  return nodes.at(-1)?.value ?? null;
+}
+
+function lapseAt(timePosition: number, altitudeM: number) {
+  const lowerIndex = Math.floor(timePosition);
+  const upperIndex = Math.min(hours.length - 1, Math.ceil(timePosition));
+  const lowerNodes = lapseByHour[lowerIndex];
+  const upperNodes = lapseByHour[upperIndex];
+  const lower = interpolateVertical(
+    lowerNodes,
+    Math.min(altitudeM, lowerNodes.at(-1)?.altitudeM ?? altitudeM),
+  );
+  const upper = interpolateVertical(
+    upperNodes,
+    Math.min(altitudeM, upperNodes.at(-1)?.altitudeM ?? altitudeM),
+  );
+  if (lower == null) return upper;
+  if (upper == null) return lower;
+  if (lowerIndex === upperIndex) return lower;
+  return lower + (upper - lower) * (timePosition - lowerIndex);
+}
+
+function stabilityClass(lapse: number) {
+  if (lapse <= -3) return "very-unstable";
+  if (lapse <= -2.5) return "unstable";
+  if (lapse <= -2) return "conditional-strong";
+  if (lapse <= -1.5) return "conditional";
+  if (lapse <= -1.2) return "near-neutral";
+  if (lapse <= 0) return "stable";
+  if (lapse <= 0.5) return "inverted";
+  return "strong-inversion";
+}
+
+const fieldColumns = hours.length * 24;
+const fieldRows = Math.ceil(plotHeight / 1.5);
+const fieldColumnWidth = plotWidth / fieldColumns;
+const fieldRowHeight = plotHeight / fieldRows;
+const stabilityChunks = new Map<string, string[]>();
+
+for (let row = 0; row < fieldRows; row += 1) {
+  const altitude = ceiling - ((row + 0.5) / fieldRows) * (ceiling - floor);
+  let activeClass: string | null = null;
+  let runStart = 0;
+  for (let column = 0; column <= fieldColumns; column += 1) {
+    let nextClass: string | null = null;
+    if (column < fieldColumns) {
+      const timePosition = Math.min(
+        hours.length - 1,
+        Math.max(0, ((column + 0.5) / fieldColumns) * hours.length - 0.5),
+      );
+      const lapse = lapseAt(timePosition, altitude);
+      nextClass = lapse == null ? null : stabilityClass(lapse);
+    }
+    if (nextClass === activeClass) continue;
+    if (activeClass != null) {
+      const runWidth = (column - runStart) * fieldColumnWidth;
+      const path = `M${short(left + runStart * fieldColumnWidth)} ${short(
+        profileTop + row * fieldRowHeight,
+      )}h${short(runWidth)}v${short(fieldRowHeight + 0.35)}h-${short(runWidth)}Z`;
+      stabilityChunks.set(activeClass, [...(stabilityChunks.get(activeClass) ?? []), path]);
+    }
+    activeClass = nextClass;
+    runStart = column;
+  }
+}
+
+const stabilityPaths = Object.fromEntries(
+  [...stabilityChunks].map(([className, chunks]) => [className, chunks.join("")]),
+);
+
+const dewPointByHour = hours.map((hour) => {
+  const levels = [...hour.levels].sort((a, b) => a.heightM - b.heightM);
+  const first = levels[0];
+  if (!first) return [];
+  return [
+    { altitudeM: floor, value: first.dewPointDepressionC },
+    ...levels.map((level) => ({
+      altitudeM: level.heightM,
+      value: level.dewPointDepressionC,
+    })),
+  ];
+});
+
+function dewPointDepressionAt(timePosition: number, altitudeM: number) {
+  const lowerIndex = Math.floor(timePosition);
+  const upperIndex = Math.min(hours.length - 1, Math.ceil(timePosition));
+  const lowerNodes = dewPointByHour[lowerIndex];
+  const upperNodes = dewPointByHour[upperIndex];
+  const lower = interpolateVertical(
+    lowerNodes,
+    Math.min(altitudeM, lowerNodes.at(-1)?.altitudeM ?? altitudeM),
+  );
+  const upper = interpolateVertical(
+    upperNodes,
+    Math.min(altitudeM, upperNodes.at(-1)?.altitudeM ?? altitudeM),
+  );
+  if (lower == null) return upper;
+  if (upper == null) return lower;
+  if (lowerIndex === upperIndex) return lower;
+  return lower + (upper - lower) * (timePosition - lowerIndex);
+}
+
+const condensationChunks: string[] = [];
+for (let row = 0; row < fieldRows; row += 1) {
+  const altitude = ceiling - ((row + 0.5) / fieldRows) * (ceiling - floor);
+  let active = false;
+  let runStart = 0;
+  for (let column = 0; column <= fieldColumns; column += 1) {
+    let saturated = false;
+    if (column < fieldColumns) {
+      const timePosition = Math.min(
+        hours.length - 1,
+        Math.max(0, ((column + 0.5) / fieldColumns) * hours.length - 0.5),
+      );
+      const depression = dewPointDepressionAt(timePosition, altitude);
+      saturated = depression != null && depression < 0.5;
+    }
+    if (saturated === active) continue;
+    if (active) {
+      const runWidth = (column - runStart) * fieldColumnWidth;
+      condensationChunks.push(
+        `M${short(left + runStart * fieldColumnWidth)} ${short(profileTop + row * fieldRowHeight)}h${short(runWidth)}v${short(fieldRowHeight + 0.35)}h-${short(runWidth)}Z`,
+      );
+    }
+    active = saturated;
+    runStart = column;
+  }
+}
+const condensationPath = condensationChunks.join("");
+
+function temperatureCrossing(hour: Hour, temperatureC: number) {
+  const points = [
+    { heightM: floor, temperatureC: hour.surfaceTemperatureC },
+    ...hour.levels,
+  ].sort((a, b) => a.heightM - b.heightM);
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const lower = points[index];
+    const upper = points[index + 1];
+    if ((temperatureC - lower.temperatureC) * (temperatureC - upper.temperatureC) > 0) continue;
+    const span = upper.temperatureC - lower.temperatureC;
+    if (span === 0) continue;
+    return (
+      lower.heightM +
+      ((temperatureC - lower.temperatureC) / span) * (upper.heightM - lower.heightM)
+    );
+  }
+  return null;
+}
+
+const isotherms = [0, 10, 20].map((temperature) => {
+  const values = hours.map((hour) => temperatureCrossing(hour, temperature));
+  const path = segmentedPath((hour) => temperatureCrossing(hour, temperature));
+  const labelIndex = values.findLastIndex((value) => value != null);
+  return {
+    className: temperature === 0 ? "freezing" : "",
+    label: `${temperature}°`,
+    labelX: labelIndex >= 0 ? x(labelIndex) - 4 : 0,
+    labelY: labelIndex >= 0 ? y(values[labelIndex]!) - 5 : 0,
+    path,
+  };
+});
+
+const pressureHeights = new Map<number, number[]>();
+for (const hour of hours) {
+  for (const level of hour.levels) {
+    pressureHeights.set(level.pressureHpa, [
+      ...(pressureHeights.get(level.pressureHpa) ?? []),
+      level.heightM,
+    ]);
+  }
+}
+const median = (values: number[]) => {
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1
+    ? sorted[middle]
+    : (sorted[middle - 1] + sorted[middle]) / 2;
+};
+const altitudeTicks = [floor, ...[...pressureHeights.values()].map(median)]
+  .sort((a, b) => a - b)
+  .filter((_, index) => index === 0 || index % 2 === 0);
+
+function windBarbGeometry(speedKmh: number) {
+  const rounded = Math.max(0, Math.round(speedKmh / 5) * 5);
+  const pennants = Math.floor(rounded / 50);
+  const afterPennants = rounded - pennants * 50;
+  const fullBarbs = Math.floor(afterPennants / 10);
+  const halfBarb = afterPennants - fullBarbs * 10 >= 5;
+  const pennantPaths: string[] = [];
+  const featherPaths: string[] = [];
+  for (let index = 0; index < pennants; index += 1) {
+    const barbY = -16 + index * 7;
+    pennantPaths.push(`M0 ${barbY} L9.5 ${barbY + 5} L0 ${barbY + 5} Z`);
+  }
+  const featherOffset = pennants * 7 + (pennants > 0 ? 1.5 : 0);
+  for (let index = 0; index < fullBarbs; index += 1) {
+    const barbY = -16 + featherOffset + index * 3.8;
+    featherPaths.push(`M0 ${barbY} L8 ${barbY + 4.4}`);
+  }
+  if (halfBarb) {
+    const halfGap = pennants === 0 && fullBarbs === 0 ? 2.2 : 0;
+    const barbY = -16 + featherOffset + fullBarbs * 3.8 + halfGap;
+    featherPaths.push(`M0 ${barbY} L4.5 ${barbY + 2.4}`);
+  }
+  return {
+    calm: speedKmh < 2.5,
+    pennants: pennantPaths,
+    shaft: [`M0 5 L0 -16`, ...featherPaths].join(" "),
+  };
+}
+
+const windBarbs = hours.flatMap((hour, hourIndex) => {
+  if (hourIndex % 2 !== 0) return [];
+  const readings = [
+    { altitudeM: floor + 30, directionDeg: hour.windDirectionDeg, speedKmh: hour.windSpeedKmh },
+    ...[hour.levels[1], hour.levels[3], hour.levels[5]].filter(Boolean).map((level) => ({
+      altitudeM: level.heightM,
+      directionDeg: level.windDirectionDeg,
+      speedKmh: level.windSpeedKmh,
+    })),
+  ];
+  return readings.map((reading) => ({
+    ...reading,
+    ...windBarbGeometry(reading.speedKmh),
+    x: x(hourIndex),
+    y: y(reading.altitudeM),
+  }));
+});
+
+const usableLiftPath = segmentedPath((hour) => hour.usableLiftTopM);
+const boundaryLayerPath = segmentedPath((hour) => hour.boundaryLayerTopM);
+const cloudBasePath = segmentedPath((hour) => hour.cloudBaseM);
+const highlightedX = x(highlightedIndex);
+const launchAltitude = profile.siteAltitudeM;
+const modelShort = profile.model.replace("continental ", "").replace("HRDPS", "HRDPS ·");
+const viewBoxes: Record<WindgramView, string> = {
+  full: `0 0 ${width} ${height}`,
+  metrics: `0 10 ${width} 123`,
+  stability: `0 136 ${width} 304`,
+  lines: `0 136 ${width} 304`,
+};
+const viewLabels: Record<WindgramView, string> = {
+  full: `Fixed HRDPS profile for ${dayLabel}: metric strips above a time-height stability field with near-saturated hatching, cloud base, usable lift, boundary-layer top, isotherms, launch elevation, and winds aloft`,
+  metrics: `Fixed surface pressure, precipitation, cloud cover, and thermal-velocity strips for ${dayLabel}`,
+  stability: `Fixed atmospheric stability at morning, peak heating, and evening for ${dayLabel}`,
+  lines: `Fixed cloud base, usable-lift top, and boundary-layer top through ${dayLabel}`,
+};
+const showMetrics = view === "full" || view === "metrics";
+const showProfile = view !== "metrics";
+const showIsotherms = view === "full" || view === "lines";
+const showDerivedLines = view === "full" || view === "lines";
+const showUsableLift = showDerivedLines;
+const showWind = view === "full";
+const showCondensation = view === "full";
+const condensationPatternId = `condensation-${view}`;
+
+// The article details use the same forecast as the complete instrument but
+// change the visual question. Reprinting the full time-height frame for every
+// section would make distinct readings look like copies of one chart.
+const detailTop = 50;
+const detailBottom = 286;
+const detailHeight = detailBottom - detailTop;
+const detailY = (altitudeM: number) =>
+  detailBottom - ((altitudeM - floor) / (ceiling - floor)) * detailHeight;
+const detailTicks = [floor, 2500, 4000, ceiling]
+  .filter((altitude, index, values) => altitude >= floor && altitude <= ceiling && values.indexOf(altitude) === index);
+
+const snapshotIndexes = [
+  Math.min(2, hours.length - 1),
+  highlightedIndex,
+  Math.max(0, hours.length - 3),
+].filter((index, position, values) => values.indexOf(index) === position);
+const snapshotLeft = 108;
+const snapshotWidth = 132;
+const snapshotGap = 28;
+const snapshotRows = 72;
+const stabilitySnapshots = snapshotIndexes.map((hourIndex, position) => ({
+  hour: hours[hourIndex],
+  x: snapshotLeft + position * (snapshotWidth + snapshotGap),
+  cells: Array.from({ length: snapshotRows }, (_, row) => {
+    const altitude = ceiling - ((row + 0.5) / snapshotRows) * (ceiling - floor);
+    const lapse = lapseAt(hourIndex, altitude);
+    return {
+      className: lapse == null ? "missing" : stabilityClass(lapse),
+      height: detailHeight / snapshotRows + 0.25,
+      y: detailTop + row * (detailHeight / snapshotRows),
+    };
+  }),
+}));
+
+const detailLeft = 82;
+const detailRight = 536;
+const detailPlotWidth = detailRight - detailLeft;
+const detailX = (index: number) =>
+  detailLeft + (index / Math.max(1, hours.length - 1)) * detailPlotWidth;
+function segmentedDetailPath(value: (hour: Hour) => number | null) {
+  const paths: string[] = [];
+  let segment: Point[] = [];
+  for (let index = 0; index <= hours.length; index += 1) {
+    const reading = index < hours.length ? value(hours[index]) : null;
+    if (reading != null && Number.isFinite(reading)) {
+      segment.push({ x: detailX(index), y: detailY(reading) });
+      continue;
+    }
+    if (segment.length > 0) paths.push(curvedPath(segment));
+    segment = [];
+  }
+  return paths.join(" ");
+}
+const detailLines = {
+  boundary: segmentedDetailPath((hour) => hour.boundaryLayerTopM),
+  cloud: segmentedDetailPath((hour) => hour.cloudBaseM),
+  usable: segmentedDetailPath((hour) => hour.usableLiftTopM),
+};
+
+---
+
+<figure class={`home-windgram view-${view}`}>
+  {view === "full" && (
+    <div class="instrument-label">
+      <span>Fixed forecast sample</span>
+      <strong>One model grid cell</strong>
+      <span>{modelShort}</span>
+    </div>
+  )}
+
+  {view === "full" && (
+    <div class="hour-readout" aria-label={`Peak thermal hour ${localHour(highlighted)}`}>
+      <strong>{localHour(highlighted)}:00</strong>
+      <span>{Math.round(highlighted.surfaceTemperatureC)} °C</span>
+      <span>
+        w* {highlighted.thermalVelocityMs.toFixed(1)} m/s · usable lift{" "}
+        {Math.round(highlighted.usableLiftTopM ?? floor).toLocaleString("en-CA")} m
+      </span>
+      <span>cloud {Math.round(highlighted.cloudCoverPercent)}%</span>
+    </div>
+  )}
+
+  {(view === "full" || view === "metrics") && (
+    <div class="chart-scroll" tabindex="0" aria-label="Scrollable windgram plot">
+      <svg
+        viewBox={viewBoxes[view]}
+        role="img"
+        aria-label={viewLabels[view]}
+      >
+      <defs>
+        <pattern id={condensationPatternId} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" class="condensation-hatch" />
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width={width} height={height} class="paper" />
+
+      {showMetrics && (
+        bandDefinitions.map((band) => (
+          <g class={`metric-band ${band.className}`}>
+            <rect x={left} y={band.top} width={plotWidth} height={bandHeight} />
+            <line x1={left} y1={band.top + bandHeight / 2} x2={left + plotWidth} y2={band.top + bandHeight / 2} />
+            <path d={band.area} class="area" />
+            <path d={band.line} class="line" />
+            <text x={left - 9} y={band.top + 10} class="row-label">{band.label}</text>
+            <text x={left - 9} y={band.top + 21} class="row-unit">{band.unit}</text>
+          </g>
+        ))
+      )}
+
+      {showProfile && <rect x={left} y={profileTop} width={plotWidth} height={plotHeight} class="profile-paper" />}
+
+      {showProfile && (
+        Object.entries(stabilityPaths).map(([className, path]) => (
+          <path d={path} class={`stability ${className}`} />
+        ))
+      )}
+
+      {showCondensation && condensationPath && (
+        <path d={condensationPath} fill={`url(#${condensationPatternId})`} class="condensation-field" />
+      )}
+
+      {showProfile && (
+        altitudeTicks.map((altitude) => (
+          <g>
+            <line x1={left} y1={y(altitude)} x2={left + plotWidth} y2={y(altitude)} class="altitude-grid" />
+            <text x={left - 9} y={y(altitude) + 4} class="axis-label">{Math.round(altitude).toLocaleString("en-CA")} m</text>
+            <text x={left + plotWidth + 9} y={y(altitude) + 4} class="axis-label axis-label-right">
+              {Math.round(altitude * 3.28084).toLocaleString("en-CA")} ft
+            </text>
+          </g>
+        ))
+      )}
+
+      {showProfile && (
+        hours.map((hour, index) =>
+          index % 2 === 0 ? (
+            <g>
+              <line x1={x(index)} y1={profileTop} x2={x(index)} y2={profileBottom} class="hour-grid" />
+              <text x={x(index)} y={timeLabelY} class="time-label">{localHour(hour)}:00</text>
+            </g>
+          ) : null,
+        )
+      )}
+
+      {showIsotherms && (
+        isotherms.map((isotherm) => (
+          <g class={`isotherm-group ${isotherm.className}`}>
+            <path d={isotherm.path} class="isotherm halo" />
+            <path d={isotherm.path} class="isotherm mark" />
+            {isotherm.labelX > 0 && <text x={isotherm.labelX} y={isotherm.labelY}>{isotherm.label}</text>}
+          </g>
+        ))
+      )}
+
+      {showProfile && launchAltitude != null && (
+        <g class="launch">
+          <line x1={left} y1={y(launchAltitude)} x2={left + plotWidth} y2={y(launchAltitude)} />
+          <path d={`M${left} ${y(launchAltitude)}l8 -5v10Z`} />
+          <text x={left + 11} y={y(launchAltitude) - 6}>launch</text>
+        </g>
+      )}
+
+      {showDerivedLines && <path d={boundaryLayerPath} class="series halo boundary" />}
+      {showDerivedLines && <path d={boundaryLayerPath} class="series boundary" />}
+      {showDerivedLines && <path d={cloudBasePath} class="series halo cloud-base" />}
+      {showDerivedLines && <path d={cloudBasePath} class="series cloud-base" />}
+      {showUsableLift && <path d={usableLiftPath} class="series halo usable" />}
+      {showUsableLift && <path d={usableLiftPath} class="series usable" />}
+
+      {showWind && (
+        windBarbs.map((barb) =>
+          barb.calm ? (
+            <g>
+              <circle cx={barb.x} cy={barb.y} r="3.4" class="calm halo" />
+              <circle cx={barb.x} cy={barb.y} r="3.4" class="calm mark" />
+            </g>
+          ) : (
+            <g transform={`translate(${barb.x} ${barb.y}) rotate(${barb.directionDeg}) scale(.62)`}>
+              <path d={barb.shaft} class="barb halo" />
+              {barb.pennants.map((pennant) => <path d={pennant} class="pennant halo" />)}
+              <path d={barb.shaft} class="barb mark" />
+              {barb.pennants.map((pennant) => <path d={pennant} class="pennant mark" />)}
+            </g>
+          ),
+        )
+      )}
+
+      <g class="selected-column">
+        <rect x={highlightedX - columnWidth / 2} y={bandTop} width={columnWidth} height={profileBottom - bandTop} />
+        <line x1={highlightedX} y1={bandTop} x2={highlightedX} y2={profileBottom} />
+      </g>
+
+      {showUsableLift && highlighted.usableLiftTopM != null && (
+        <g class="wing" transform={`translate(${highlightedX} ${y(highlighted.usableLiftTopM)})`}>
+          <path class="halo" d="M-8 2Q0-6.5 8 2Q0-1.5-8 2Z" />
+          <path class="mark" d="M-8 2Q0-6.5 8 2Q0-1.5-8 2Z" />
+        </g>
+      )}
+
+      {showDerivedLines && highlighted.cloudBaseM != null && (
+        <g class="cloud-marker" transform={`translate(${highlightedX} ${y(highlighted.cloudBaseM)})`}>
+          <path d="M-7 2.5h14a3.2 3.2 0 0 0-.6-6.3A5 5 0 0 0-3-5a4 4 0 0 0-4 4 3 3 0 0 0 0 3.5Z" />
+        </g>
+      )}
+
+      <text x={left + plotWidth} y={height - 4} class="date-label">{dayLabel}</text>
+      </svg>
+    </div>
+  )}
+
+  {view === "stability" && (
+    <div class="chart-scroll detail-scroll" tabindex="0" aria-label="Scrollable stability sequence">
+      <svg viewBox="0 0 620 330" role="img" aria-label={viewLabels.stability}>
+        <rect x="0" y="0" width="620" height="330" class="paper" />
+        <text x="26" y="24" class="detail-title">STABILITY THROUGH THE DAY</text>
+        {detailTicks.map((altitude) => (
+          <g>
+            <text x="94" y={detailY(altitude) + 4} class="axis-label">
+              {Math.round(altitude).toLocaleString("en-CA")} m
+            </text>
+            <line x1="101" y1={detailY(altitude)} x2="568" y2={detailY(altitude)} class="altitude-grid" />
+          </g>
+        ))}
+        {stabilitySnapshots.map((snapshot) => (
+          <g>
+            <rect x={snapshot.x} y={detailTop} width={snapshotWidth} height={detailHeight} class="snapshot-frame" />
+            {snapshot.cells.map((cell) => (
+              <rect
+                x={snapshot.x + 1}
+                y={cell.y}
+                width={snapshotWidth - 2}
+                height={cell.height}
+                class={`stability ${cell.className}`}
+              />
+            ))}
+            {launchAltitude != null && (
+              <line
+                x1={snapshot.x}
+                y1={detailY(launchAltitude)}
+                x2={snapshot.x + snapshotWidth}
+                y2={detailY(launchAltitude)}
+                class="snapshot-launch"
+              />
+            )}
+            <text x={snapshot.x + snapshotWidth / 2} y="313" class="snapshot-time">
+              {localHour(snapshot.hour)}:00
+            </text>
+          </g>
+        ))}
+        {launchAltitude != null && (
+          <text x="574" y={detailY(launchAltitude) + 4} class="launch-label">launch</text>
+        )}
+      </svg>
+    </div>
+  )}
+
+  {view === "lines" && (
+    <div class="chart-scroll detail-scroll" tabindex="0" aria-label="Scrollable derived-height comparison">
+      <svg viewBox="0 0 620 330" role="img" aria-label={viewLabels.lines}>
+        <rect x="0" y="0" width="620" height="330" class="paper" />
+        <text x="26" y="24" class="detail-title">THREE HEIGHTS, THREE QUESTIONS</text>
+        {detailTicks.map((altitude) => (
+          <g>
+            <line x1={detailLeft} y1={detailY(altitude)} x2={detailRight} y2={detailY(altitude)} class="altitude-grid" />
+            <text x={detailLeft - 9} y={detailY(altitude) + 4} class="axis-label">
+              {Math.round(altitude).toLocaleString("en-CA")} m
+            </text>
+            <text x={detailRight + 9} y={detailY(altitude) + 4} class="axis-label axis-label-right">
+              {Math.round(altitude * 3.28084).toLocaleString("en-CA")} ft
+            </text>
+          </g>
+        ))}
+        {hours.map((hour, index) => index % 2 === 0 ? (
+          <g>
+            <line x1={detailX(index)} y1={detailTop} x2={detailX(index)} y2={detailBottom} class="hour-grid" />
+            <text x={detailX(index)} y="309" class="time-label">{localHour(hour)}:00</text>
+          </g>
+        ) : null)}
+        {launchAltitude != null && (
+          <line x1={detailLeft} y1={detailY(launchAltitude)} x2={detailRight} y2={detailY(launchAltitude)} class="detail-launch" />
+        )}
+        <path d={detailLines.boundary} class="series halo boundary" />
+        <path d={detailLines.boundary} class="series boundary" />
+        <path d={detailLines.cloud} class="series halo cloud-base" />
+        <path d={detailLines.cloud} class="series cloud-base" />
+        <path d={detailLines.usable} class="series halo usable" />
+        <path d={detailLines.usable} class="series usable" />
+        <line x1={detailX(highlightedIndex)} y1={detailTop} x2={detailX(highlightedIndex)} y2={detailBottom} class="detail-selected" />
+        <text x={detailX(highlightedIndex)} y="40" class="detail-selected-label">{localHour(highlighted)}:00</text>
+        {highlighted.cloudBaseM != null && (
+          <g>
+            <circle cx={detailX(highlightedIndex)} cy={detailY(highlighted.cloudBaseM)} r="3.5" class="cloud-dot" />
+            <text x={detailX(highlightedIndex) - 10} y={detailY(highlighted.cloudBaseM) - 7} class="detail-value cloud-value">
+              cloud base {Math.round(highlighted.cloudBaseM).toLocaleString("en-CA")} m
+            </text>
+          </g>
+        )}
+        {highlighted.usableLiftTopM != null && (
+          <g>
+            <circle cx={detailX(highlightedIndex)} cy={detailY(highlighted.usableLiftTopM)} r="3.5" class="usable-dot" />
+            <text x={detailX(highlightedIndex) - 10} y={detailY(highlighted.usableLiftTopM) - 7} class="detail-value usable-value">
+              usable lift {Math.round(highlighted.usableLiftTopM).toLocaleString("en-CA")} m
+            </text>
+          </g>
+        )}
+        {highlighted.boundaryLayerTopM != null && (
+          <g>
+            <circle cx={detailX(highlightedIndex)} cy={detailY(highlighted.boundaryLayerTopM)} r="3.5" class="boundary-dot" />
+            <text x={detailX(highlightedIndex) - 10} y={detailY(highlighted.boundaryLayerTopM) + 16} class="detail-value boundary-value">
+              boundary layer {Math.round(highlighted.boundaryLayerTopM).toLocaleString("en-CA")} m
+            </text>
+          </g>
+        )}
+      </svg>
+    </div>
+  )}
+
+  {view !== "metrics" && (
+    <figcaption>
+      {(view === "full" || view === "lines") && (
+        <div class="series-legend">
+          <span><i class="key usable-key"></i> usable lift</span>
+          <span><i class="key boundary-key"></i> boundary layer</span>
+          <span><i class="key cloud-key"></i> cloud base</span>
+          {view === "full" && <span><i class="hatch-key"></i> near-saturated layer</span>}
+          <span><i class="key launch-key"></i> launch elevation</span>
+        </div>
+      )}
+      {(view === "full" || view === "stability") && (
+        <div class="stability-legend">
+          <span class="stability-title">stability</span>
+          <span class="stability-end">unstable</span>
+          <span class="swatches" aria-hidden="true">
+            <i class="very-unstable"></i><i class="unstable"></i><i class="conditional-strong"></i><i class="conditional"></i>
+            <i class="near-neutral"></i><i class="stable"></i><i class="inverted"></i><i class="strong-inversion"></i>
+          </span>
+          <span class="stability-end">inverted</span>
+        </div>
+      )}
+    </figcaption>
+  )}
+</figure>
+
+<style>
+  .home-windgram {
+    --windgram-paper: #fffdf8;
+    --windgram-profile: #edf1ee;
+    --windgram-band: #f2f4f1;
+    --windgram-pressure: var(--chart-pressure);
+    --windgram-rain: var(--chart-rain);
+    --windgram-cloud: var(--chart-cloud);
+    --windgram-lift: var(--chart-lift);
+    --windgram-usable: var(--chart-usable);
+    --windgram-boundary: var(--chart-boundary);
+    --windgram-wind: var(--chart-wind);
+    --windgram-freezing: var(--chart-freezing);
+    min-width: 0;
+    margin: 0;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--chart-wind);
+    box-shadow: 0 18px 42px rgb(81 72 62 / 0.1);
+  }
+  .home-windgram:not(.view-full) {
+    width: min(900px, calc(100vw - 32px));
+    margin: 18px 50% 34px;
+    transform: translateX(-50%);
+    box-shadow: none;
+  }
+  .view-stability :is(.series, .barb, .pennant, .calm, .wing, .cloud-marker, .isotherm-group),
+  .view-lines :is(.barb, .pennant, .calm, .isotherm-group) {
+    display: none;
+  }
+  .instrument-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 15px 10px;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .instrument-label strong { color: var(--ink); }
+  .hour-readout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface-raised);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .hour-readout strong { color: var(--accent); font-size: 13px; }
+  .chart-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    background: var(--windgram-paper);
+    scrollbar-color: var(--accent) var(--surface-raised);
+  }
+  .chart-scroll:focus-visible { outline-offset: -3px; }
+  svg { display: block; width: 100%; height: auto; font-family: var(--mono); }
+  .paper { fill: var(--windgram-paper); }
+  .profile-paper { fill: var(--windgram-profile); stroke: var(--rule); stroke-width: 1; }
+  .metric-band > rect { fill: var(--windgram-band); stroke: var(--rule); stroke-width: .6; }
+  .metric-band > line { stroke: var(--rule); stroke-width: .55; stroke-dasharray: 2 4; opacity: .55; }
+  .metric-band .area { opacity: .34; }
+  .metric-band .line { fill: none; stroke-width: 1.7; vector-effect: non-scaling-stroke; }
+  .metric-band.pressure .area { fill: var(--windgram-pressure); }
+  .metric-band.pressure .line { stroke: var(--windgram-pressure); }
+  .metric-band.rain .area { fill: var(--windgram-rain); }
+  .metric-band.rain .line { stroke: var(--windgram-rain); }
+  .metric-band.cloud .area { fill: var(--windgram-cloud); }
+  .metric-band.cloud .line { stroke: var(--windgram-cloud); }
+  .metric-band.lift .area { fill: var(--windgram-lift); }
+  .metric-band.lift .line { stroke: var(--windgram-lift); }
+  .row-label { fill: var(--ink); font-size: 12px; font-weight: 700; text-anchor: end; text-transform: uppercase; }
+  .row-unit { fill: var(--ink-mute); font-size: 10.5px; text-anchor: end; }
+  .stability { opacity: .82; }
+  .stability.very-unstable, .swatches .very-unstable { fill: var(--stab-very-unstable); background: var(--stab-very-unstable); }
+  .stability.unstable, .swatches .unstable { fill: var(--stab-unstable); background: var(--stab-unstable); }
+  .stability.conditional-strong, .swatches .conditional-strong { fill: var(--stab-conditional-strong); background: var(--stab-conditional-strong); }
+  .stability.conditional, .swatches .conditional { fill: var(--stab-conditional); background: var(--stab-conditional); }
+  .stability.near-neutral, .swatches .near-neutral { fill: var(--stab-near-neutral); background: var(--stab-near-neutral); }
+  .stability.stable, .swatches .stable { fill: var(--stab-stable); background: var(--stab-stable); }
+  .stability.inverted, .swatches .inverted { fill: var(--stab-inverted); background: var(--stab-inverted); }
+  .stability.strong-inversion, .swatches .strong-inversion { fill: var(--stab-strong-inversion); background: var(--stab-strong-inversion); }
+  .condensation-hatch { stroke: var(--ink); stroke-width: 1.7; opacity: .72; }
+  .condensation-field { pointer-events: none; }
+  .altitude-grid { stroke: var(--ink); stroke-width: .7; stroke-dasharray: 2 4; opacity: .32; vector-effect: non-scaling-stroke; }
+  .hour-grid { stroke: var(--ink); stroke-width: .65; opacity: .16; vector-effect: non-scaling-stroke; }
+  .axis-label { fill: var(--ink); font-size: 11.5px; text-anchor: end; }
+  .axis-label-right { text-anchor: start; }
+  .time-label { fill: var(--ink); font-size: 11.5px; text-anchor: middle; }
+  .detail-title { fill: var(--ink); font-size: 14px; font-weight: 700; letter-spacing: .04em; }
+  .detail-launch { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 4; opacity: .65; }
+  .detail-selected { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 4; opacity: .8; }
+  .detail-selected-label { fill: var(--accent-strong); font-size: 11px; font-weight: 700; text-anchor: middle; }
+  .detail-value {
+    fill: var(--ink);
+    font-size: 11px;
+    font-weight: 700;
+    text-anchor: end;
+    paint-order: stroke;
+    stroke: var(--windgram-paper);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+  }
+  .cloud-dot { fill: var(--windgram-wind); }
+  .usable-dot { fill: var(--windgram-usable); }
+  .boundary-dot { fill: var(--windgram-boundary); }
+  .isotherm { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+  .isotherm.halo { stroke: var(--windgram-paper); stroke-width: 3; opacity: .8; }
+  .isotherm.mark { stroke: var(--ink); stroke-width: 1; opacity: .72; }
+  .isotherm-group.freezing .mark { stroke: var(--windgram-freezing); stroke-width: 1.8; stroke-dasharray: 7 3 1 3; opacity: 1; }
+  .isotherm-group text { fill: var(--ink); font-size: 11.5px; font-weight: 700; text-anchor: end; paint-order: stroke; stroke: var(--windgram-paper); stroke-width: 2.5; }
+  .isotherm-group.freezing text { fill: var(--windgram-freezing); }
+  .launch line { stroke: var(--ink); stroke-width: 1.1; stroke-dasharray: 2 4; opacity: .68; vector-effect: non-scaling-stroke; }
+  .launch path { fill: var(--ink); opacity: .68; }
+  .launch text { fill: var(--ink); font-size: 11.5px; font-weight: 600; paint-order: stroke; stroke: var(--windgram-paper); stroke-width: 2.5; }
+  .series { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+  .series.halo { stroke: var(--windgram-paper); opacity: .82; }
+  .series.boundary { stroke: var(--windgram-boundary); stroke-width: 2.1; stroke-dasharray: 12 5; }
+  .series.halo.boundary { stroke: var(--windgram-paper); stroke-width: 4; }
+  .series.cloud-base { stroke: var(--windgram-wind); stroke-width: 1.9; stroke-dasharray: 1 5; }
+  .series.halo.cloud-base { stroke: var(--windgram-paper); stroke-width: 3.8; }
+  .series.usable { stroke: var(--windgram-usable); stroke-width: 2.3; }
+  .series.halo.usable { stroke: var(--windgram-paper); stroke-width: 4.2; }
+  .barb { fill: none; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+  .barb.halo { stroke: var(--windgram-paper); stroke-width: 3.2; opacity: .84; }
+  .barb.mark { stroke: var(--windgram-wind); stroke-width: 1.5; }
+  .pennant.halo { fill: var(--windgram-paper); stroke: var(--windgram-paper); stroke-width: 3; }
+  .pennant.mark { fill: var(--windgram-paper); stroke: var(--windgram-wind); stroke-width: 1.25; }
+  .calm { fill: none; vector-effect: non-scaling-stroke; }
+  .calm.halo { stroke: var(--windgram-paper); stroke-width: 3; }
+  .calm.mark { stroke: var(--windgram-wind); stroke-width: 1.4; }
+  .selected-column rect { fill: var(--accent); opacity: .055; }
+  .selected-column line { stroke: var(--accent); stroke-width: 1.1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+  .wing .halo { fill: var(--windgram-paper); stroke: var(--windgram-paper); stroke-width: 3; }
+  .wing .mark { fill: #1688c2; stroke: var(--ink); stroke-width: .8; }
+  .cloud-marker path { fill: #f8f3d8; stroke: var(--ink); stroke-width: .8; }
+  .date-label { fill: var(--ink-mute); font-size: 11.5px; }
+  .date-label { text-anchor: end; }
+  figcaption {
+    display: grid;
+    gap: 13px;
+    padding: 14px 16px 16px;
+    border-top: 1px solid var(--rule);
+    background: color-mix(in srgb, var(--surface) 82%, var(--surface-raised));
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .series-legend {
+    display: grid;
+    grid-template-columns: .9fr 1.12fr .9fr 1.42fr 1.08fr;
+    gap: 10px 18px;
+    width: 100%;
+  }
+  .series-legend span { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+  .key { display: inline-block; flex: 0 0 29px; width: 29px; height: 0; border-top: 2px solid; }
+  .usable-key { border-color: var(--windgram-usable); }
+  .boundary-key { border-color: var(--windgram-boundary); border-top-style: dashed; }
+  .cloud-key { border-color: var(--windgram-wind); border-top-style: dotted; }
+  .launch-key { border-color: var(--ink); border-top-style: dotted; }
+  .hatch-key {
+    display: inline-block;
+    width: 23px;
+    height: 10px;
+    border: 1px solid var(--ink-mute);
+    background: repeating-linear-gradient(135deg, transparent 0 4px, var(--ink) 4px 5.5px);
+  }
+  .stability-legend {
+    display: grid;
+    grid-template-columns: auto auto minmax(160px, 1fr) auto;
+    align-items: center;
+    gap: 10px 13px;
+    width: 100%;
+    padding-top: 11px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-mute);
+  }
+  .stability-title { color: var(--ink); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .stability-end { font-size: 11px; }
+  .swatches { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 12px; border: 1px solid var(--rule-strong); }
+  .swatches i { display: block; }
+  @media (max-width: 680px) {
+    .instrument-label { font-size: 11px; }
+    .instrument-label span:last-child { display: none; }
+    .chart-scroll svg { width: 620px; max-width: none; }
+    .hour-readout { font-size: 11.5px; }
+    .series-legend { grid-template-columns: 1fr 1fr; }
+    .series-legend span { gap: 7px; white-space: nowrap; }
+    .series-legend span:nth-child(4) { grid-column: 1 / -1; grid-row: 3; }
+    .series-legend span:nth-child(5) { grid-column: 2; grid-row: 2; }
+    .key { flex-basis: 24px; width: 24px; }
+    .stability-legend { grid-template-columns: auto 1fr auto; }
+    .stability-title { grid-column: 1 / -1; }
+  }
+</style>

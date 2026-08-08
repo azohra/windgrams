@@ -1,0 +1,112 @@
+<figure class="derivation-flow" aria-labelledby="derivation-title derivation-caption">
+  <header class="figure-heading">
+    <h3 id="derivation-title">Inputs and dependencies for each published field</h3>
+  </header>
+
+  <p class="scroll-cue" aria-hidden="true">Scroll across the dependency graph →</p>
+  <div class="graph-scroll" role="region" aria-label="Scrollable windgram derivation dependency graph" tabindex="0">
+    <svg class="dependency-graphic" viewBox="0 0 960 470" role="img" aria-labelledby="dependency-title dependency-description">
+      <title id="dependency-title">Windgram derivation dependencies</title>
+      <desc id="dependency-description">
+        Model terrain, surface temperature and moisture, surface heat fluxes, pressure-level height and temperature, and pressure-level moisture branch into a retained atmospheric column, a surface parcel, and virtual heat flux. Those intermediates produce stability, model-cloud flags, cloud base, boundary-layer top, thermal velocity, and usable-lift top. Usable lift also depends on cloud base, boundary-layer top, thermal velocity, and retained level heights.
+      </desc>
+      <defs>
+        <marker id="derive-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0 0 L10 5 L0 10 Z" class="arrow-head" />
+        </marker>
+      </defs>
+
+      <text x="34" y="30" class="column-label">MODEL INPUT</text>
+      <text x="345" y="30" class="column-label">INTERMEDIATE</text>
+      <text x="680" y="30" class="column-label">PUBLISHED FIELD</text>
+
+      <g class="dependencies" aria-hidden="true">
+        <path d="M205 72 C282 72 298 91 370 91" />
+        <path d="M205 72 C278 72 302 213 370 213" />
+        <path d="M205 144 C282 144 306 213 370 213" />
+        <path d="M205 144 C284 144 304 329 370 329" />
+        <path d="M205 216 C282 216 303 329 370 329" />
+        <path d="M205 288 C282 288 300 91 370 91" />
+        <path d="M205 360 C286 360 304 91 370 91" />
+
+        <path d="M520 91 C590 91 606 68 675 68" />
+        <path d="M520 91 C590 91 606 132 675 132" />
+        <path d="M520 213 C590 213 606 199 675 199" />
+        <path d="M520 91 C585 91 610 266 675 266" />
+        <path d="M520 213 C590 213 607 266 675 266" />
+        <path d="M520 329 C590 329 607 333 675 333" />
+        <path d="M520 91 C580 91 615 326 675 326" />
+        <path d="M675 259 C648 259 648 326 675 326" class="downstream" marker-end="url(#derive-arrow)" />
+        <path d="M520 91 C548 91 542 407 570 407" class="downstream" />
+        <path d="M675 192 C610 192 603 407 610 407" class="downstream" />
+        <path d="M675 259 C630 259 630 407 635 407" class="downstream" />
+        <path d="M675 326 C655 326 655 407 660 407" class="downstream" />
+        <path d="M570 407 H757" class="downstream" marker-end="url(#derive-arrow)" />
+      </g>
+
+      <g class="inputs">
+        <g transform="translate(34 58)"><circle cx="8" cy="8" r="7" /><text x="25" y="4">Model terrain</text><text x="25" y="22" class="detail">filter + elevation datum</text></g>
+        <g transform="translate(34 130)"><circle cx="8" cy="8" r="7" /><text x="25" y="4">Surface temperature</text><text x="25" y="22" class="detail">+ dew-point depression</text></g>
+        <g transform="translate(34 202)"><circle cx="8" cy="8" r="7" /><text x="25" y="4">Surface heat fluxes</text><text x="25" y="22" class="detail">sensible + latent</text></g>
+        <g transform="translate(34 274)"><circle cx="8" cy="8" r="7" /><text x="25" y="4">Level height + temperature</text><text x="25" y="22" class="detail">pressure-level profile</text></g>
+        <g transform="translate(34 346)"><circle cx="8" cy="8" r="7" /><text x="25" y="4">Level moisture</text><text x="25" y="22" class="detail">dew-point depression</text></g>
+      </g>
+
+      <g class="intermediates">
+        <g transform="translate(370 75)"><circle cx="9" cy="9" r="9" /><text x="28" y="5">Retained column</text><text x="28" y="24" class="detail">finite levels ≥ terrain + 20 m</text></g>
+        <g transform="translate(370 197)"><circle cx="9" cy="9" r="9" /><text x="28" y="5">Surface parcel</text><text x="28" y="24" class="detail">dry-adiabatic ascent</text></g>
+        <g transform="translate(370 313)"><circle cx="9" cy="9" r="9" /><text x="28" y="5">Virtual heat flux</text><text x="28" y="24" class="detail">sensible + latent buoyancy</text></g>
+      </g>
+
+      <g class="outputs">
+        <g transform="translate(675 52)"><circle cx="9" cy="9" r="9" /><text x="29" y="5">Stability field</text><text x="29" y="24" class="detail">adjacent-level lapse rate</text></g>
+        <g transform="translate(675 116)"><circle cx="9" cy="9" r="9" /><text x="29" y="5">Model-cloud flags</text><text x="29" y="24" class="detail">dew-point depression &lt; 0.5 °C</text></g>
+        <g transform="translate(675 183)"><circle cx="9" cy="9" r="9" /><text x="29" y="5">Cloud base</text><text x="29" y="24" class="detail">terrain + 121 m per °C</text></g>
+        <g transform="translate(675 250)"><circle cx="9" cy="9" r="9" /><text x="29" y="5">Boundary-layer top</text><text x="29" y="24" class="detail">parcel/environment crossing</text></g>
+        <g transform="translate(675 317)"><circle cx="9" cy="9" r="9" /><text x="29" y="5">Thermal velocity, w*</text><text x="29" y="24" class="detail">virtual heat flux × layer depth</text></g>
+        <g transform="translate(766 398)" class="usable"><circle cx="9" cy="9" r="9" /><text x="29" y="5">Usable-lift top</text><text x="29" y="24" class="detail">core ≥ 1 m/s; cloud cap</text></g>
+      </g>
+    </svg>
+  </div>
+
+  <figcaption id="derivation-caption">
+    Cloud base and usable-lift top receive hourly smoothing after derivation. Stability, boundary-layer top, and w* do not.
+  </figcaption>
+</figure>
+
+<style>
+  .derivation-flow {
+    width: min(980px, calc(100vw - 32px));
+    margin: 30px 50% 44px;
+    transform: translateX(-50%);
+    color: var(--ink);
+  }
+  .figure-heading {
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .figure-heading h3 { margin: 0; font-family: var(--sans); font-size: 18px; letter-spacing: 0; text-transform: none; }
+  .graph-scroll { width: 100%; }
+  .scroll-cue { display: none; }
+  .dependency-graphic { display: block; width: 100%; height: auto; background: var(--surface); border-bottom: 1px solid var(--rule); }
+  .column-label { font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: .07em; fill: var(--ink-mute); }
+  .dependencies path { fill: none; stroke: var(--rule); stroke-width: 1.35; }
+  .dependencies .downstream { stroke: var(--accent); stroke-width: 1.8; stroke-dasharray: 5 4; }
+  .arrow-head { fill: var(--accent); }
+  .inputs circle { fill: var(--surface); stroke: var(--rule-strong); stroke-width: 2; }
+  .intermediates circle { fill: var(--surface-raised); stroke: var(--rule-strong); stroke-width: 2; }
+  .outputs circle { fill: var(--ink); stroke: var(--surface); stroke-width: 2; }
+  .outputs .usable circle { fill: var(--accent); }
+  .inputs text, .intermediates text, .outputs text { font-family: var(--sans); font-size: 14px; font-weight: 700; fill: var(--ink); }
+  .inputs .detail, .intermediates .detail, .outputs .detail { font-family: var(--mono); font-size: 12px; font-weight: 400; fill: var(--ink-mute); }
+  figcaption { margin-top: 13px; font-family: var(--mono); font-size: 13px; line-height: 1.5; color: var(--ink-mute); }
+  @media (min-width: 721px) {
+    .scroll-cue { display: none !important; }
+  }
+  @media (max-width: 720px) {
+    .scroll-cue { display: block !important; margin: 10px 0 5px; font-family: var(--mono); font-size: 11px; color: var(--ink-mute); }
+    .graph-scroll { overflow-x: auto; overscroll-behavior-inline: contain; border-bottom: 1px solid var(--rule); scrollbar-color: var(--accent) var(--surface-raised); }
+    .graph-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .dependency-graphic { min-width: 900px; border-bottom: 0; }
+  }
+</style>

@@ -1,0 +1,251 @@
+---
+interface MemberSource {
+  id: number;
+  heightM: number | null;
+  ceiled?: boolean;
+}
+
+const source: MemberSource[] = [
+  { id: 1, heightM: 2850 },
+  { id: 2, heightM: 3010 },
+  { id: 3, heightM: null },
+  { id: 4, heightM: 3125 },
+  { id: 5, heightM: 3270 },
+  { id: 6, heightM: null },
+  { id: 7, heightM: 3340 },
+  { id: 8, heightM: 3390 },
+  { id: 9, heightM: 3415 },
+  { id: 10, heightM: 3450 },
+  { id: 11, heightM: 3480 },
+  { id: 12, heightM: 3505 },
+  { id: 13, heightM: 3530 },
+  { id: 14, heightM: 3560 },
+  { id: 15, heightM: 3605 },
+  { id: 16, heightM: null },
+  { id: 17, heightM: 3650 },
+  { id: 18, heightM: 3690 },
+  { id: 19, heightM: 5700, ceiled: true },
+  { id: 20, heightM: 5700, ceiled: true },
+  { id: 21, heightM: 5700, ceiled: true },
+];
+
+const ranked = source
+  .filter((member): member is MemberSource & { heightM: number } => member.heightM !== null)
+  .sort((a, b) => a.heightM - b.heightM || a.id - b.id);
+const rankById = new Map(ranked.map((member, index) => [member.id, index + 1]));
+const valueCount = ranked.length;
+const missingCount = source.length - valueCount;
+const ceiledCount = source.filter((member) => member.ceiled).length;
+const resolvedCount = valueCount - ceiledCount;
+
+const percentile = (fraction: number) => {
+  const position = (ranked.length - 1) * fraction;
+  const lower = Math.floor(position);
+  const upper = Math.ceil(position);
+  const weight = position - lower;
+  return ranked[lower].heightM * (1 - weight) + ranked[upper].heightM * weight;
+};
+
+const p10 = Math.round(percentile(0.1));
+const p50 = Math.round(percentile(0.5));
+const p90 = Math.round(percentile(0.9));
+const formatM = (value: number) => value.toLocaleString("en-CA");
+
+const members = source.map((member) => {
+  const rank = rankById.get(member.id) ?? null;
+  const id = member.id.toString().padStart(2, "0");
+  const ariaLabel = member.heightM === null
+    ? `Member ${id}: no usable-lift value; excluded from height percentiles.`
+    : member.ceiled
+      ? `Member ${id}: reported ${formatM(member.heightM)} metres at the column ceiling; lower bound; conditional position ${rank} of ${valueCount}.`
+      : `Member ${id}: usable-lift top ${formatM(member.heightM)} metres; conditional position ${rank} of ${valueCount}.`;
+  return { ...member, idLabel: id, rank, ariaLabel };
+});
+---
+
+<figure class="member-accounting" data-member-accounting data-mode="occurrence" aria-labelledby="member-accounting-title member-accounting-caption">
+  <header class="figure-heading">
+    <h3 id="member-accounting-title">Count occurrence across 21 members before ranking height</h3>
+  </header>
+
+  <fieldset class="mode-controls">
+    <legend>Choose the accounting step</legend>
+    <label>
+      <input type="radio" name="member-accounting-mode" value="occurrence" aria-controls="occurrence-panel" checked />
+      <span><b>1</b> Occurrence / member fraction</span>
+    </label>
+    <label>
+      <input type="radio" name="member-accounting-mode" value="ranking" aria-controls="ranking-panel" />
+      <span><b>2</b> Conditional percentile ranking</span>
+    </label>
+    <label>
+      <input type="radio" name="member-accounting-mode" value="censoring" aria-controls="censoring-panel" />
+      <span><b>3</b> Column censoring</span>
+    </label>
+  </fieldset>
+
+  <div class="member-field">
+    <ol class="member-grid" aria-label="Twenty-one ensemble members">
+      {members.map((member) => (
+        <li
+          class="member-mark"
+          data-member-id={member.id}
+          data-rank-order={member.rank ?? 99}
+          data-occurs={member.heightM !== null ? "true" : "false"}
+          data-ceiled={member.ceiled ? "true" : "false"}
+          aria-label={member.ariaLabel}
+        >
+          <span class="member-dot" aria-hidden="true">
+            <span class="member-glyph" data-rank={member.rank?.toString().padStart(2, "0") ?? "—"}></span>
+          </span>
+          <span class="member-id">M{member.idLabel}</span>
+        </li>
+      ))}
+    </ol>
+
+    <div class="mode-legends" aria-hidden="true">
+      <p data-legend="occurrence"><span>✓ value returned</span><span>× no value</span></p>
+      <p data-legend="ranking"><span>01–18 ranked positions</span><span>— excluded</span></p>
+      <p data-legend="censoring"><span>• resolved below ceiling</span><span>↑ ceiled lower bound</span><span>× no occurrence</span></p>
+    </div>
+  </div>
+
+  <div class="mode-panels" aria-live="polite">
+    <section id="occurrence-panel" data-panel="occurrence">
+      <div class="mode-measure"><strong>{valueCount} / {source.length}</strong><span>members return a usable-lift top</span></div>
+      <p>The other {missingCount} return null because their derived core never clears the sink threshold. Null is absence of the quantity, not a zero-metre height, so those members do not enter the height ranking.</p>
+    </section>
+
+    <section id="ranking-panel" data-panel="ranking" hidden>
+      <div class="mode-measure"><strong>{valueCount} values</strong><span>ranked after occurrence is counted</span></div>
+      <dl class="percentiles">
+        <div><dt>p10</dt><dd>{formatM(p10)} m</dd></div>
+        <div><dt>p50</dt><dd>{formatM(p50)} m</dd></div>
+        <div><dt>p90</dt><dd>≥ {formatM(p90)} m</dd></div>
+      </dl>
+      <p>Percentiles describe only the {valueCount} members with a value. They do not turn {valueCount} of {source.length} into a calibrated probability, and they do not put the {missingCount} null members at the bottom of the height distribution.</p>
+    </section>
+
+    <section id="censoring-panel" data-panel="censoring" hidden>
+      <div class="mode-measure"><strong>{ceiledCount} ceiled</strong><span>members reach the 5,700 m source-column top</span></div>
+      <dl class="censor-counts">
+        <div><dt>Resolved</dt><dd>{resolvedCount}</dd></div>
+        <div><dt>Ceiled</dt><dd>{ceiledCount}</dd></div>
+        <div><dt>No occurrence</dt><dd>{missingCount}</dd></div>
+      </dl>
+      <p>A ceiled value means the derived top is at least 5,700 m; the source column ended before the crossing. It is a lower bound, not an exact height. Any percentile that reaches ceiled members inherits that limit.</p>
+    </section>
+  </div>
+
+  <figcaption id="member-accounting-caption">
+    Illustrative 21-member values constructed to show schema semantics. The member counts and percentile arithmetic are literal; the elevations are not an archived forecast case.
+  </figcaption>
+</figure>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-member-accounting]").forEach((figure) => {
+    const radios = figure.querySelectorAll<HTMLInputElement>('input[name="member-accounting-mode"]');
+    const panels = figure.querySelectorAll<HTMLElement>("[data-panel]");
+    const grid = figure.querySelector<HTMLOListElement>(".member-grid");
+    const memberMarks = Array.from(figure.querySelectorAll<HTMLElement>(".member-mark"));
+
+    const activate = (mode: string) => {
+      figure.dataset.mode = mode;
+      if (grid) {
+        const orderKey = mode === "ranking" ? "rankOrder" : "memberId";
+        [...memberMarks]
+          .sort((a, b) => Number(a.dataset[orderKey]) - Number(b.dataset[orderKey]))
+          .forEach((member) => grid.append(member));
+      }
+      panels.forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== mode;
+      });
+    };
+
+    radios.forEach((radio) => {
+      radio.addEventListener("change", () => {
+        if (radio.checked) activate(radio.value);
+      });
+    });
+  });
+</script>
+
+<style>
+  .member-accounting {
+    width: min(920px, calc(100vw - 32px));
+    margin: 28px 50% 42px;
+    transform: translateX(-50%);
+    color: var(--ink);
+  }
+  .figure-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; padding-bottom: 10px; border-bottom: 2px solid var(--ink); }
+  .figure-heading h3 { margin: 0; font-family: var(--sans); font-size: 18px; letter-spacing: 0; text-transform: none; }
+  .mode-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: 0; padding: 0; border: 0; border-bottom: 1px solid var(--rule); }
+  .mode-controls legend { width: 100%; padding: 11px 0 6px; font-family: var(--mono); font-size: 12px; letter-spacing: .055em; text-transform: uppercase; color: var(--ink-mute); }
+  .mode-controls label { position: relative; min-width: 0; }
+  .mode-controls label + label { border-left: 1px solid var(--rule); }
+  .mode-controls input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .mode-controls span { min-height: 52px; display: flex; align-items: center; gap: 8px; padding: 10px 13px; font-size: 13px; line-height: 1.3; color: var(--ink-soft); cursor: pointer; }
+  .mode-controls b { width: 23px; height: 23px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid var(--rule-strong); border-radius: 50%; font-family: var(--mono); font-size: 11px; color: var(--ink); }
+  .mode-controls input:checked + span { color: var(--ink); box-shadow: inset 0 -3px 0 var(--accent); }
+  .mode-controls input:checked + span b { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+  .mode-controls input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .member-field { padding: 22px 18px 13px; background: var(--surface); border-bottom: 1px solid var(--rule); }
+  .member-grid { width: min(610px, 100%); display: grid; grid-template-columns: repeat(7, 1fr); gap: 16px 24px; margin: 0 auto; padding: 0; list-style: none; }
+  .member-mark { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .member-dot { width: 42px; height: 42px; display: grid; place-items: center; border: 2px solid var(--rule-strong); border-radius: 50%; background: var(--surface); color: var(--ink); }
+  .member-glyph::before { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+  .member-id { font-family: var(--mono); font-size: 11px; color: var(--ink-mute); }
+
+  [data-mode="occurrence"] .member-mark[data-occurs="true"] .member-dot { background: var(--ink); color: var(--surface); }
+  [data-mode="occurrence"] .member-mark[data-occurs="true"] .member-glyph::before { content: "✓"; }
+  [data-mode="occurrence"] .member-mark[data-occurs="false"] .member-dot { border-style: dashed; color: var(--accent-strong); }
+  [data-mode="occurrence"] .member-mark[data-occurs="false"] .member-glyph::before { content: "×"; font-size: 18px; }
+
+  [data-mode="ranking"] .member-mark[data-occurs="true"] .member-glyph::before { content: attr(data-rank); }
+  [data-mode="ranking"] .member-mark[data-occurs="false"] .member-dot { border-style: dashed; color: var(--ink-mute); }
+  [data-mode="ranking"] .member-mark[data-occurs="false"] .member-glyph::before { content: "—"; }
+  [data-mode="ranking"] .member-mark[data-ceiled="true"] .member-dot { border: 3px double var(--accent); }
+
+  [data-mode="censoring"] .member-mark[data-occurs="true"][data-ceiled="false"] .member-dot { background: var(--ink); color: var(--surface); }
+  [data-mode="censoring"] .member-mark[data-occurs="true"][data-ceiled="false"] .member-glyph::before { content: "•"; font-size: 20px; }
+  [data-mode="censoring"] .member-mark[data-ceiled="true"] .member-dot { border: 3px double var(--accent); color: var(--accent-strong); }
+  [data-mode="censoring"] .member-mark[data-ceiled="true"] .member-glyph::before { content: "↑"; font-size: 18px; }
+  [data-mode="censoring"] .member-mark[data-occurs="false"] .member-dot { border-style: dashed; color: var(--ink-mute); }
+  [data-mode="censoring"] .member-mark[data-occurs="false"] .member-glyph::before { content: "×"; font-size: 18px; }
+
+  .mode-legends p { display: none; justify-content: center; flex-wrap: wrap; gap: 10px 22px; margin: 14px 0 0; font-family: var(--mono); font-size: 11px; color: var(--ink-mute); }
+  [data-mode="occurrence"] [data-legend="occurrence"], [data-mode="ranking"] [data-legend="ranking"], [data-mode="censoring"] [data-legend="censoring"] { display: flex; }
+  .mode-panels { min-height: 130px; padding: 17px 0 0; }
+  .mode-panels section { display: grid; grid-template-columns: 220px 1fr; gap: 12px 28px; align-items: start; }
+  .mode-panels section[hidden] { display: none; }
+  .mode-measure { grid-row: 1 / span 2; padding-right: 22px; border-right: 1px solid var(--rule); }
+  .mode-measure strong { display: block; font-family: var(--display); font-size: 32px; line-height: 1; text-transform: uppercase; color: var(--ink); }
+  .mode-measure span { display: block; margin-top: 7px; font-family: var(--mono); font-size: 12px; line-height: 1.4; color: var(--ink-mute); }
+  .mode-panels p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-soft); }
+  .percentiles, .censor-counts { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; }
+  .percentiles div, .censor-counts div { padding: 0 14px; border-left: 1px solid var(--rule); }
+  .percentiles div:first-child, .censor-counts div:first-child { padding-left: 0; border-left: 0; }
+  .percentiles dt, .censor-counts dt { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-mute); }
+  .percentiles dd, .censor-counts dd { margin: 3px 0 0; font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--ink); }
+  figcaption { padding-top: 11px; border-top: 1px solid var(--rule); font-family: var(--mono); font-size: 12px; line-height: 1.5; color: var(--ink-mute); }
+  @media (max-width: 640px) {
+    .figure-heading { display: block; }
+    .mode-controls { grid-template-columns: 1fr; }
+    .mode-controls label + label { border-left: 0; border-top: 1px solid var(--rule); }
+    .mode-controls span { min-height: 45px; padding-block: 8px; }
+    .member-field { padding: 18px 8px 12px; }
+    .member-grid { gap: 13px 5px; }
+    .member-dot { width: 38px; height: 38px; }
+    .member-id { font-size: 10px; }
+    .mode-panels { min-height: 0; padding-top: 15px; }
+    .mode-panels section { grid-template-columns: 1fr; gap: 12px; }
+    .mode-measure { grid-row: auto; padding: 0 0 11px; border-right: 0; border-bottom: 1px solid var(--rule); }
+    .mode-measure strong { font-size: 29px; }
+    .percentiles div, .censor-counts div { padding-inline: 9px; }
+    .percentiles dd, .censor-counts dd { font-size: 14px; }
+    .mode-panels p { font-size: 13.5px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .member-accounting * { scroll-behavior: auto !important; }
+  }
+</style>

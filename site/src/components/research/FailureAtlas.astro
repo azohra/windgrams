@@ -1,0 +1,66 @@
+---
+const failures = [
+  { number: "01", failure: "Misregistered WCS crop", href: "#a-wcs-crop-sampled-the-wrong-cells", check: "Compare crop samples with an independent point query." },
+  { number: "02", failure: "Successful zero-filled subset", href: "#a-broken-wcs-request-returned-valid-zeros", check: "Test physical plausibility: afternoon heat cannot be zero everywhere." },
+  { number: "03", failure: "Grid-relative wind left unrotated", href: "#grid-relative-winds-were-not-rotated", check: "Read projection metadata; rotate vectors; compare bearings." },
+  { number: "04", failure: "Wrong or truncated model object", href: "#a-model-url-returned-another-models-grid", check: "Verify Content-Length, ETag, and grid geometry." },
+  { number: "05", failure: "Flux window treated as instantaneous", href: "#flux-fields-used-different-time-intervals", check: "Inspect GRIB time-range metadata and sequences across resets." },
+  { number: "06", failure: "Partially published model run", href: "#a-model-run-was-only-partly-published", check: "Request the final required forecast hour before building." },
+  { number: "07", failure: "Stale provider identifier", href: "#provider-paths-changed-before-their-documentation", check: "Query live capabilities or the provider directory." },
+];
+---
+
+<figure class="failure-atlas" aria-labelledby="failure-title failure-caption">
+  <header class="figure-heading">
+    <h3 id="failure-title">Seven forecast-data failures and their independent checks</h3>
+  </header>
+
+  <div class="matrix-heading" aria-hidden="true">
+    <span>Failure</span><span></span><span>Independent check</span>
+  </div>
+  <ol class="diagnostic-matrix">
+    {failures.map((item) => (
+      <li>
+        <a class="failure-label" href={item.href}>
+          <span class="failure-number">{item.number}</span>
+          <span>{item.failure}</span>
+        </a>
+        <span class="relationship" aria-hidden="true">→</span>
+        <span class="check-label">{item.check}</span>
+      </li>
+    ))}
+  </ol>
+
+  <figcaption id="failure-caption">
+    Incidents observed during model-feed verification through 2026-08-08.
+  </figcaption>
+</figure>
+
+<style>
+  .failure-atlas {
+    width: min(940px, calc(100vw - 32px));
+    margin: 28px 50% 44px;
+    transform: translateX(-50%);
+    color: var(--ink);
+  }
+  .figure-heading { padding-bottom: 10px; border-bottom: 2px solid var(--ink); }
+  .figure-heading h3 { margin: 0; font-family: var(--sans); font-size: 18px; letter-spacing: 0; text-transform: none; }
+  .matrix-heading { font-family: var(--mono); font-size: 12px; letter-spacing: .055em; text-transform: uppercase; color: var(--ink-mute); }
+  .matrix-heading { display: grid; grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1.22fr); padding: 13px 10px 6px; }
+  .diagnostic-matrix { margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--rule-strong); }
+  .diagnostic-matrix li { display: grid; grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1.22fr); align-items: center; min-height: 58px; padding: 7px 10px; border-top: 1px solid var(--rule); }
+  .failure-label { display: grid; grid-template-columns: 32px 1fr; gap: 10px; align-items: baseline; color: var(--ink); text-decoration: none; font-size: 14px; line-height: 1.35; }
+  .failure-label:hover span:last-child { text-decoration: underline; text-underline-offset: 2px; }
+  .failure-number { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .relationship { text-align: center; font-family: var(--mono); font-size: 19px; color: var(--accent); }
+  .check-label { font-size: 14px; line-height: 1.4; color: var(--ink-soft); }
+  figcaption { margin-top: 13px; font-family: var(--mono); font-size: 13px; line-height: 1.5; color: var(--ink-mute); }
+  @media (max-width: 620px) {
+    .matrix-heading { grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1.15fr); padding-inline: 0; font-size: 11px; }
+    .diagnostic-matrix li { grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1.15fr); min-height: 78px; padding-inline: 0; }
+    .failure-label { display: block; padding-right: 5px; font-size: 13px; }
+    .failure-number { display: block; margin-bottom: 2px; }
+    .relationship { font-size: 16px; }
+    .check-label { padding-left: 5px; font-size: 13px; }
+  }
+</style>

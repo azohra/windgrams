@@ -1,0 +1,219 @@
+---
+import exampleProfile from "./forecast-example.json";
+
+interface Hour {
+  pressureKpa: number;
+  validAt: string;
+}
+
+interface Profile {
+  hours: Hour[];
+  model: string;
+  referenceTime: string;
+}
+
+const profile = exampleProfile as Profile;
+const hours = profile.hours;
+const pressures = hours.map((hour) => hour.pressureKpa);
+const maximum = Math.max(...pressures);
+const minimum = Math.min(...pressures);
+const minimumIndex = pressures.indexOf(minimum);
+const x0 = 54;
+const x1 = 594;
+const y0 = 62;
+const y1 = 218;
+const x = (index: number) => x0 + (index / (hours.length - 1)) * (x1 - x0);
+const y = (pressure: number) =>
+  y0 + ((maximum - pressure) / Math.max(maximum - minimum, 0.001)) * (y1 - y0);
+const pressurePath = pressures
+  .map((pressure, index) => `${index === 0 ? "M" : "L"}${x(index).toFixed(1)} ${y(pressure).toFixed(1)}`)
+  .join(" ");
+const dayRangeHpa = (maximum - minimum) * 10;
+const labelIndexes = [0, 7, minimumIndex, hours.length - 1];
+const localLabels = ["07:00", "14:00", "19:00", "21:00"];
+const runLabel = `${profile.referenceTime.slice(0, 10)} ${profile.referenceTime.slice(11, 13)}Z`;
+---
+
+<figure class="pressure-tendency" aria-labelledby="pressure-figure-title pressure-caption">
+  <div class="figure-heading">
+    <h3 id="pressure-figure-title">Point tendency versus spatial gradient</h3>
+  </div>
+
+  <p class="scroll-cue" aria-hidden="true">Scroll to compare the station trace with the pressure-gradient map →</p>
+  <div class="pressure-scroll" role="region" aria-label="Scrollable pressure tendency and pressure-gradient diagram" tabindex="0">
+  <svg class="pressure-graphic" viewBox="0 0 960 300" role="img" aria-labelledby="pressure-title pressure-description">
+    <title id="pressure-title">A sample mean sea-level pressure tendency and the missing spatial pressure gradient</title>
+    <desc id="pressure-description">
+      Sample pressure falls from 101.417 kilopascals at 7 AM to 101.019 at 7 PM, then rises slightly to 101.070 at 9 PM. The trace is auto-scaled to its four hectopascal range. A separate map sketch shows that wind responds to pressure differences across space, which a one-point trace cannot supply.
+    </desc>
+
+    <g class="trace">
+      <text x="54" y="34" class="panel-title">MEAN SEA-LEVEL PRESSURE AT ONE POINT, p(t)</text>
+      <line x1={x0} x2={x1} y1={y0} y2={y0} class="range-rule" />
+      <line x1={x0} x2={x1} y1={y1} y2={y1} class="range-rule" />
+      <path d={pressurePath} class="pressure-line" />
+
+      {labelIndexes.map((index, labelIndex) => (
+        <g>
+          <line x1={x(index)} x2={x(index)} y1={y1 + 6} y2={y1 + 12} class="tick" />
+          <text x={x(index)} y={y1 + 29} text-anchor="middle" class="time-label">{localLabels[labelIndex]}</text>
+        </g>
+      ))}
+
+      <circle cx={x(0)} cy={y(pressures[0])} r="4" class="point" />
+      <text x={x(0) + 8} y={y(pressures[0]) + 17} class="value-label">101.417 kPa</text>
+
+      <circle cx={x(minimumIndex)} cy={y(minimum)} r="4" class="point" />
+      <text x={x(minimumIndex) - 8} y={y(minimum) - 11} text-anchor="end" class="value-label">101.019</text>
+
+      <circle cx={x(hours.length - 1)} cy={y(pressures.at(-1) ?? minimum)} r="4" class="recovery-point" />
+      <text x={x(hours.length - 1) - 2} y={y(pressures.at(-1) ?? minimum) - 13} text-anchor="end" class="value-label">101.070</text>
+
+      <path d={`M${x0 - 18} ${y0} h-9 v${y1 - y0} h9`} class="bracket" />
+      <text x={x0 - 36} y={(y0 + y1) / 2} text-anchor="middle" class="range-label" transform={`rotate(-90 ${x0 - 36} ${(y0 + y1) / 2})`}>
+        AUTO-SCALED · {dayRangeHpa.toFixed(1)} hPa RANGE
+      </text>
+      <text x={x1} y="258" text-anchor="end" class="warning-label">The vertical axis does not start at zero.</text>
+    </g>
+
+    <line x1="635" x2="635" y1="24" y2="274" class="divider" />
+
+    <g class="gradient">
+      <text x="675" y="34" class="panel-title">WIND NEEDS A MAP, Δp/Δx</text>
+      <path d="M706 64 C746 87 754 126 724 155 C704 175 705 200 730 218" class="isobar high" />
+      <path d="M781 57 C822 83 830 124 801 156 C782 178 783 201 808 220" class="isobar" />
+      <path d="M856 51 C899 79 906 125 878 158 C861 179 862 202 886 222" class="isobar low" />
+      <text x="690" y="86" class="map-value">101.8</text>
+      <text x="772" y="79" class="map-value">101.3</text>
+      <text x="852" y="73" class="map-value">100.8 kPa</text>
+
+      <rect x="707" y="111" width="168" height="38" rx="2" class="label-scrim" />
+      <text x="791" y="126" text-anchor="middle" class="gradient-label">PRESSURE DIFFERENCE</text>
+      <text x="791" y="141" text-anchor="middle" class="gradient-label">ACROSS DISTANCE</text>
+      <circle cx="718" cy="173" r="6" class="station" />
+      <text x="718" y="198" text-anchor="middle" class="station-label">A</text>
+      <circle cx="866" cy="173" r="6" class="station" />
+      <text x="866" y="198" text-anchor="middle" class="station-label">B</text>
+      <path d="M735 173 H847" class="gradient-arrow" marker-end="url(#pressure-arrow)" />
+      <text x="791" y="235" text-anchor="middle" class="map-note">The pressure gradient drives wind.</text>
+      <text x="791" y="254" text-anchor="middle" class="map-note">One station cannot reveal it.</text>
+    </g>
+
+    <defs>
+      <marker id="pressure-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 Z" class="arrow-head" />
+      </marker>
+    </defs>
+  </svg>
+  </div>
+
+  <dl class="tendency-meanings">
+    <div>
+      <dt><span aria-hidden="true">↘</span> Falling</dt>
+      <dd>Often accompanies an approaching low, trough, or front.</dd>
+    </div>
+    <div>
+      <dt><span aria-hidden="true">↗</span> Rising</dt>
+      <dd>Often follows a system or marks a building ridge; subsidence and inversions may strengthen.</dd>
+    </div>
+    <div>
+      <dt><span aria-hidden="true">→</span> Flat</dt>
+      <dd>Shows little pressure evolution at that point.</dd>
+    </div>
+  </dl>
+
+  <figcaption id="pressure-caption">
+    The sample falls from 101.417 to 101.019 kPa—about 4 hPa—then rises slightly. That is a modest tendency, not a launch signal. Read it with a pressure map, wind profile, stability, cloud, and precipitation.
+    <span class="source-note">Fixed source: {profile.model}, run {runLabel}.</span>
+  </figcaption>
+</figure>
+
+<style>
+  .pressure-tendency {
+    width: min(980px, calc(100vw - 32px));
+    margin: 28px 50% 42px;
+    transform: translateX(-50%);
+    color: var(--ink);
+  }
+  .figure-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .figure-heading h3 {
+    margin: 0;
+    font-family: var(--sans);
+    font-size: 18px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .pressure-graphic {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+  }
+  .pressure-scroll { width: 100%; }
+  .scroll-cue { display: none; }
+  .panel-title,
+  .range-label,
+  .time-label,
+  .value-label,
+  .warning-label,
+  .map-value,
+  .station-label,
+  .gradient-label,
+  .map-note {
+    font-family: var(--mono);
+  }
+  .panel-title { font-size: 13px; letter-spacing: .055em; fill: var(--ink-mute); }
+  .range-rule { stroke: var(--rule); stroke-width: 1; stroke-dasharray: 2 5; }
+  .pressure-line { fill: none; stroke: var(--chart-pressure); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .point { fill: var(--chart-pressure); stroke: var(--surface); stroke-width: 2; }
+  .recovery-point { fill: var(--surface); stroke: var(--chart-pressure); stroke-width: 3; }
+  .tick { stroke: var(--rule-strong); }
+  .time-label { font-size: 12px; fill: var(--ink-mute); }
+  .value-label { font-size: 13px; font-weight: 700; fill: var(--ink); }
+  .warning-label { font-size: 12px; fill: var(--ink-mute); }
+  .bracket { fill: none; stroke: var(--rule-strong); stroke-width: 1.5; }
+  .range-label { font-size: 11px; letter-spacing: .03em; fill: var(--ink-mute); }
+  .divider { stroke: var(--rule); stroke-width: 1; }
+  .isobar { fill: none; stroke: var(--chart-pressure); stroke-width: 2; }
+  .isobar.high { stroke-width: 4; }
+  .isobar.low { stroke-dasharray: 5 4; }
+  .map-value { font-size: 12px; font-weight: 700; fill: var(--ink); }
+  .station { fill: var(--ink); stroke: var(--surface); stroke-width: 2; }
+  .station-label { font-size: 12px; font-weight: 700; fill: var(--ink); }
+  .gradient-arrow { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .arrow-head { fill: var(--accent); }
+  .label-scrim { fill: var(--surface); stroke: var(--rule); stroke-width: .75; }
+  .gradient-label { font-size: 11px; font-weight: 700; fill: var(--accent-strong); }
+  .map-note { font-size: 12px; fill: var(--ink-soft); }
+  .tendency-meanings {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin: 16px 0 0;
+  }
+  .tendency-meanings div { padding-top: 10px; border-top: 2px solid var(--rule-strong); }
+  .tendency-meanings dt { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--ink); }
+  .tendency-meanings dt span { color: var(--chart-pressure); }
+  .tendency-meanings dd { margin: 5px 0 0; font-size: 13px; line-height: 1.45; color: var(--ink-soft); }
+  figcaption { margin-top: 16px; font-family: var(--mono); font-size: 13px; line-height: 1.55; color: var(--ink-mute); }
+  .source-note { display: block; margin-top: 5px; font-size: 11px; }
+  @media (min-width: 721px) {
+    .scroll-cue { display: none !important; }
+  }
+  @media (max-width: 720px) {
+    .figure-heading { display: block; }
+    .scroll-cue { display: block !important; margin: 10px 0 5px; font-family: var(--mono); font-size: 11px; color: var(--ink-mute); }
+    .pressure-scroll { overflow-x: auto; overscroll-behavior-inline: contain; border-bottom: 1px solid var(--rule); scrollbar-color: var(--accent) var(--surface-raised); }
+    .pressure-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .pressure-graphic { min-width: 900px; border-bottom: 0; }
+    .tendency-meanings { grid-template-columns: 1fr; gap: 12px; }
+  }
+</style>

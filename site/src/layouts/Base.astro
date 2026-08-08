@@ -1,0 +1,56 @@
+---
+import SkylineMark from "../components/SkylineMark.astro";
+import "@fontsource/big-shoulders/700.css";
+import "@fontsource/big-shoulders/800.css";
+import "@fontsource/big-shoulders/900.css";
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/500.css";
+import "@fontsource/ibm-plex-sans/600.css";
+import "@fontsource/ibm-plex-sans/700.css";
+import "@fontsource/ibm-plex-mono/400.css";
+import "@fontsource/ibm-plex-mono/500.css";
+import "@fontsource/ibm-plex-mono/600.css";
+import "../styles/theme.css";
+
+interface Props {
+  title: string;
+  description: string;
+  activeNav?: "research";
+}
+
+const { title, description, activeNav } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="/">
+        <SkylineMark />
+        Windgrams
+      </a>
+      <nav class="site-nav">
+        <a href="/" aria-current={activeNav === "research" ? "page" : undefined}>Research</a>
+        <a href="https://github.com/azohra/windgrams">GitHub</a>
+      </nav>
+    </header>
+
+    <slot />
+
+    <footer class="site-footer">
+      <p>
+        Forecast source data © Environment and Climate Change Canada and NOAA's Open Data
+        Dissemination program, used under their respective open-data licences. Derived profiles are
+        free to use with attribution. Code is MIT licensed.
+        <a href="https://github.com/azohra/windgrams">azohra/windgrams</a>
+      </p>
+    </footer>
+  </body>
+</html>

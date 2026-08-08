@@ -1,0 +1,178 @@
+---
+const width = 1000;
+const chartTop = 82;
+const chartBottom = 510;
+const altitudeMin = 1100;
+const altitudeMax = 4500;
+const y = (altitudeM: number) =>
+  chartBottom - ((altitudeM - altitudeMin) / (altitudeMax - altitudeMin)) * (chartBottom - chartTop);
+const altitudeTicks = [1200, 1500, 2000, 2500, 3000, 3500, 4000, 4500];
+const saturatedBands = [
+  { lowerM: 1368, upperM: 2099 },
+  { lowerM: 2846, upperM: 3286 },
+];
+---
+
+<figure class="moisture-case" aria-labelledby="moisture-case-title moisture-case-caption">
+  <header>
+    <h3 id="moisture-case-title">Precipitation amount and phase are separate questions</h3>
+  </header>
+
+  <div class="column-scroll" tabindex="0" aria-label="Scrollable precipitation and phase-evidence column">
+    <svg viewBox={`0 0 ${width} 570`} role="img" aria-labelledby="moisture-svg-title moisture-svg-desc">
+      <title id="moisture-svg-title">Wet stable precipitation amount and phase evidence</title>
+      <desc id="moisture-svg-desc">
+        Forecast precipitation is 10.5 millimetres liquid equivalent in three hours. Two
+        near-saturated bands extend from about 1368 to 2099 metres and from about 2846 to 3286
+        metres. Launch is 1247 metres at 12.2 degrees Celsius and the zero-degree level is about
+        3487 metres. A full temperature and wet-bulb profile is still required to classify phase.
+      </desc>
+      <defs>
+        <pattern id="near-saturation-hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(38)">
+          <rect width="10" height="10" class="saturation-bed" />
+          <line x1="0" y1="0" x2="0" y2="10" class="saturation-line" />
+          <line x1="5" y1="0" x2="5" y2="10" class="saturation-line fine" />
+        </pattern>
+        <pattern id="precip-hatch" width="12" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(12)">
+          <line x1="2" y1="0" x2="2" y2="8" class="precip-line" />
+          <line x1="9" y1="8" x2="9" y2="16" class="precip-line" />
+        </pattern>
+      </defs>
+
+      <g class="altitude-grid" aria-hidden="true">
+        {altitudeTicks.map((altitude) => (
+          <>
+            <line x1="62" y1={y(altitude)} x2="496" y2={y(altitude)} />
+            <text x="53" y={y(altitude) + 4}>{altitude.toLocaleString("en-CA")} m</text>
+          </>
+        ))}
+      </g>
+
+      <rect x="188" y={chartTop} width="188" height={chartBottom - chartTop} class="column-bed" />
+
+      {saturatedBands.map((band) => {
+        const top = y(band.upperM);
+        const bottom = y(band.lowerM);
+        return (
+          <g>
+            <rect x="188" y={top} width="188" height={bottom - top} fill="url(#near-saturation-hatch)" class="saturation-band" />
+            <line x1="179" y1={top} x2="188" y2={top} class="sample-tick" />
+            <line x1="179" y1={bottom} x2="188" y2={bottom} class="sample-tick" />
+            <text x="282" y={(top + bottom) / 2 - 5} class="band-title">NEAR-SATURATED AIR</text>
+            <text x="282" y={(top + bottom) / 2 + 13} class="band-range">{`~${band.lowerM.toLocaleString("en-CA")}–${band.upperM.toLocaleString("en-CA")} m`}</text>
+          </g>
+        );
+      })}
+
+      <line x1="174" y1={y(3487)} x2="392" y2={y(3487)} class="freezing-line" />
+      <circle cx="174" cy={y(3487)} r="4" class="freezing-dot" />
+      <text x="404" y={y(3487) - 5} class="line-title">0°C level · ~3,487 m</text>
+      <text x="404" y={y(3487) + 13} class="line-note">Thermal evidence; not a rain/snow verdict</text>
+
+      <line x1="173" y1={y(1247)} x2="393" y2={y(1247)} class="launch-line" />
+      <path d={`M188 ${y(1247)} l-12 -7 v14 z`} class="launch-arrow" />
+      <text x="404" y={y(1247) - 7} class="line-title">Launch · 1,247 m · 12.2°C</text>
+
+      <path d={`M680 ${y(2099)} H704 V${chartBottom} H680 Z`} fill="url(#precip-hatch)" class="precip-column" />
+      <path d={`M722 ${chartBottom} h150 l-18 -66 h-114 l-18 66 z`} class="gauge" />
+      <line x1="750" y1={chartBottom - 24} x2="844" y2={chartBottom - 24} class="gauge-mark" />
+      <text x="797" y={chartBottom - 35} class="precip-amount">10.5 mm</text>
+      <text x="797" y={chartBottom - 8} class="precip-window">liquid equivalent / 3 h</text>
+
+      <text x="534" y="84" class="precip-heading">PRECIPITATION STEP</text>
+      <text x="534" y="104" class="precip-copy">Amount accumulated during this</text>
+      <text x="534" y="121" class="precip-copy">three-hour forecast interval.</text>
+
+      <g class="phase-gap">
+        <text x="699" y="174" class="phase-heading">PHASE NEEDS THE FALL PATH</text>
+        <text x="699" y="197">Temperature and wet bulb through</text>
+        <text x="699" y="215">the layer between cloud and launch.</text>
+        <line x1="680" y1="238" x2="680" y2="390" />
+        <circle cx="680" cy="250" r="4" />
+        <circle cx="680" cy="314" r="4" />
+        <circle cx="680" cy="378" r="4" />
+        <text x="699" y="257">source layer</text>
+        <text x="699" y="321">melting / refreezing layers</text>
+        <text x="699" y="385">surface phase</text>
+        <text x="699" y="414" class="phase-missing">Not supplied by the 0°C height alone.</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="phase-rule">
+    <span aria-hidden="true">0°C</span>
+    <p>
+      <strong>The chart does not classify precipitation phase.</strong> Rain versus snow requires the
+      temperature and wet-bulb profile through the falling layer; the 0°C height supplies one piece of evidence.
+    </p>
+  </div>
+
+  <figcaption id="moisture-case-caption">
+    Fixed archived wet-stable sample: GDPS 2026-08-13 21Z.
+  </figcaption>
+</figure>
+
+<style>
+  .moisture-case {
+    width: min(980px, calc(100vw - 32px));
+    margin: 28px 50% 44px;
+    transform: translateX(-50%);
+    color: var(--ink);
+    border-top: 3px solid var(--chart-rain);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  header {
+    padding: 18px 0 16px;
+  }
+  h3 { margin: 0; font: 700 27px/1 var(--display); text-transform: uppercase; }
+  .column-scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule); scrollbar-color: var(--accent) var(--surface-raised); }
+  svg { display: block; width: 100%; min-width: 960px; height: auto; }
+  .altitude-grid line { stroke: var(--rule); stroke-width: .8; stroke-dasharray: 2 5; }
+  .altitude-grid text, .band-title, .band-range, .line-title, .line-note, .precip-amount, .precip-window, .precip-heading, .precip-copy, .phase-gap text {
+    font-family: var(--mono);
+  }
+  .altitude-grid text { fill: var(--ink-mute); font-size: 11.5px; text-anchor: end; }
+  .column-bed { fill: var(--surface-raised); stroke: var(--ink); stroke-width: 1.2; }
+  .saturation-bed { fill: var(--chart-cloud); }
+  .saturation-line { stroke: var(--surface); stroke-width: 2.2; }
+  .saturation-line.fine { stroke-width: .8; opacity: .8; }
+  .saturation-band { stroke: var(--ink); stroke-width: 1.4; }
+  .sample-tick { stroke: var(--ink); stroke-width: 2; }
+  .band-title, .band-range { fill: var(--surface); text-anchor: middle; paint-order: stroke; stroke: var(--ink); stroke-width: 2px; }
+  .band-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; }
+  .band-range { font-size: 11px; }
+  .freezing-line { stroke: var(--chart-freezing); stroke-width: 2; stroke-dasharray: 8 3 2 3; }
+  .freezing-dot { fill: var(--surface); stroke: var(--chart-freezing); stroke-width: 2; }
+  .launch-line { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 2 4; }
+  .launch-arrow { fill: var(--ink); }
+  .line-title { fill: var(--ink); font-size: 11.5px; font-weight: 700; }
+  .line-note { fill: var(--ink-mute); font-size: 10.5px; }
+  .precip-line { stroke: var(--chart-rain); stroke-width: 2; }
+  .precip-column { stroke: var(--chart-rain); stroke-width: 1; }
+  .gauge { fill: rgb(32 122 131 / .18); stroke: var(--chart-rain); stroke-width: 2; }
+  .gauge-mark { stroke: var(--chart-rain); stroke-width: 1.3; }
+  .precip-amount { fill: var(--ink); font-size: 15px; font-weight: 700; text-anchor: middle; }
+  .precip-window { fill: var(--ink-mute); font-size: 10px; text-anchor: middle; }
+  .precip-heading, .phase-heading { fill: var(--chart-rain); font-size: 11px; font-weight: 700; letter-spacing: .06em; }
+  .precip-copy, .phase-gap text:not(.phase-heading) { fill: var(--ink-soft); font-size: 10.5px; }
+  .phase-gap line { stroke: var(--rule-strong); stroke-width: 1.2; stroke-dasharray: 3 4; }
+  .phase-gap circle { fill: var(--surface); stroke: var(--chart-freezing); stroke-width: 1.7; }
+  .phase-gap .phase-missing { fill: var(--status-serious); font-weight: 700; }
+  .phase-rule {
+    display: grid;
+    grid-template-columns: 92px 1fr;
+    align-items: center;
+    gap: 18px;
+    padding: 13px 16px;
+    border-top: 1px solid var(--rule);
+  }
+  .phase-rule span { font: 700 28px var(--display); color: var(--chart-freezing); text-align: center; border-right: 1px solid var(--rule); }
+  .phase-rule p { margin: 0; font-size: 12px; color: var(--ink-soft); }
+  .phase-rule strong { color: var(--ink); }
+  figcaption { padding: 11px 0 13px; font: 12px/1.5 var(--mono); color: var(--ink-soft); }
+  @media (max-width: 720px) {
+    h3 { font-size: 24px; }
+    .column-scroll { margin-inline: -8px; }
+    .phase-rule { grid-template-columns: 64px 1fr; }
+  }
+</style>

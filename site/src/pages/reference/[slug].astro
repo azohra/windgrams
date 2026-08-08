@@ -1,0 +1,38 @@
+---
+import Base from "../../layouts/Base.astro";
+import { referenceDocs, splitBeforeHeading, type DocPage } from "../../lib/research";
+import ArticleMeta from "../../components/research/ArticleMeta.astro";
+import ModelCompareGrid from "../../components/research/ModelCompareGrid.astro";
+
+export function getStaticPaths() {
+  return referenceDocs().map((doc) => ({ params: { slug: doc.slug }, props: { doc } }));
+}
+
+const { doc } = Astro.props;
+
+// Same splice mechanism as the research pages: the markdown stays the single
+// source of truth; components land next to the prose they illustrate.
+type Part = { type: "html"; value: string } | { type: "grid" };
+
+function buildParts(doc: DocPage): Part[] {
+  if (doc.slug === "forecast-model-feeds") {
+    const [intro, body] = splitBeforeHeading(doc.html, "hrdps-continental-25-km-supported");
+    return [
+      { type: "html", value: intro },
+      { type: "grid" },
+      { type: "html", value: body },
+    ];
+  }
+  return [{ type: "html", value: doc.html }];
+}
+
+const parts = buildParts(doc);
+---
+
+<Base title={`${doc.title} — Windgrams`} description={doc.dek} activeNav="research">
+  <main class="shell prose">
+    <p class="back-link"><a href="/">&larr; Research</a></p>
+    <ArticleMeta doc={doc} />
+    {parts.map((part) => (part.type === "html" ? <Fragment set:html={part.value} /> : <ModelCompareGrid />))}
+  </main>
+</Base>

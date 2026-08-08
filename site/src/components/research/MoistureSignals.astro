@@ -1,0 +1,137 @@
+<figure class="moisture-signals" aria-labelledby="moisture-signals-title moisture-signals-caption">
+  <header>
+    <h3 id="moisture-signals-title">Cloud percentage, cloud base, and cross-hatching answer different questions</h3>
+  </header>
+
+  <div class="signal-sequence">
+    <section class="coverage-signal" aria-labelledby="coverage-signal-title">
+      <div class="signal-index" aria-hidden="true">01</div>
+      <div class="signal-copy">
+        <h4 id="coverage-signal-title">Total cloud</h4>
+        <p class="question">What percentage of the grid cell is covered by cloud?</p>
+      </div>
+      <div class="coverage-readout" role="img" aria-label="Total cloud is 80 percent for the grid cell">
+        <div class="coverage-bar" aria-hidden="true">
+          {Array.from({ length: 10 }, (_, index) => <i class:list={{ filled: index < 8 }}></i>)}
+        </div>
+        <strong>80%</strong>
+      </div>
+      <p class="limit"><b>No height.</b> The percentage does not place a cloud layer or report its thickness.</p>
+    </section>
+
+    <section class="parcel-signal" aria-labelledby="parcel-signal-title">
+      <div class="signal-index" aria-hidden="true">02</div>
+      <div class="signal-copy">
+        <h4 id="parcel-signal-title">Surface-parcel cloud base</h4>
+        <p class="question">Where would a parcel lifted from the model surface first condense?</p>
+      </div>
+      <svg viewBox="0 0 250 190" role="img" aria-label="A surface parcel rises to a lifted-condensation-level estimate of 1212 metres">
+        <defs>
+          <pattern id="parcel-cloud-pattern" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+            <line x1="0" y1="0" x2="0" y2="9" class="parcel-hatch" />
+          </pattern>
+        </defs>
+        <line x1="42" y1="158" x2="218" y2="158" class="surface-line" />
+        <text x="42" y="177" class="small-label">MODEL-SURFACE PARCEL</text>
+        <path d="M80 151 C88 128 103 106 125 84" class="parcel-path" />
+        <path d="M125 84 l-8 6 m8 -6 l-1 11" class="parcel-arrow" />
+        <circle cx="80" cy="151" r="6" class="parcel-dot" />
+        <line x1="42" y1="72" x2="218" y2="72" class="lcl-line" />
+        <rect x="42" y="38" width="176" height="34" fill="url(#parcel-cloud-pattern)" class="parcel-cloud" />
+        <text x="218" y="61" text-anchor="end" class="value-label">LCL · 1,212 m</text>
+      </svg>
+      <p class="limit"><b>One parcel estimate.</b> The dotted line does not trace cloud already present aloft.</p>
+    </section>
+
+    <section class="sampled-signal" aria-labelledby="sampled-signal-title">
+      <div class="signal-index" aria-hidden="true">03</div>
+      <div class="signal-copy">
+        <h4 id="sampled-signal-title">Near-saturation hatching</h4>
+        <p class="question">At which sampled pressure levels is temperature within 0.5°C of dew point?</p>
+      </div>
+      <svg viewBox="0 0 250 190" role="img" aria-label="Two separate near-saturated altitude bands from about 1368 to 2099 metres and from about 2846 to 3286 metres">
+        <defs>
+          <pattern id="sampled-hatch-pattern" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+            <rect width="9" height="9" class="sampled-bed" />
+            <line x1="0" y1="0" x2="0" y2="9" class="sampled-hatch" />
+          </pattern>
+        </defs>
+        <line x1="60" y1="16" x2="60" y2="174" class="altitude-spine" />
+        <text x="51" y="22" text-anchor="end" class="altitude-label">3,400 m</text>
+        <text x="51" y="93" text-anchor="end" class="altitude-label">2,300 m</text>
+        <text x="51" y="172" text-anchor="end" class="altitude-label">1,200 m</text>
+        <rect x="72" y="29" width="144" height="31" fill="url(#sampled-hatch-pattern)" class="sampled-band" />
+        <rect x="72" y="111" width="144" height="52" fill="url(#sampled-hatch-pattern)" class="sampled-band" />
+        <text x="144" y="48" text-anchor="middle" class="band-label">~2,846–3,286 m</text>
+        <text x="144" y="141" text-anchor="middle" class="band-label">~1,368–2,099 m</text>
+        <circle cx="60" cy="29" r="3" class="sample-node" />
+        <circle cx="60" cy="60" r="3" class="sample-node" />
+        <circle cx="60" cy="111" r="3" class="sample-node" />
+        <circle cx="60" cy="163" r="3" class="sample-node" />
+      </svg>
+      <p class="limit"><b>Sampled layers.</b> Cross-hatching marks near-saturation in the model column, not the parcel-derived cloud base.</p>
+    </section>
+  </div>
+
+  <figcaption id="moisture-signals-caption">
+    Fixed archived sample: GDPS 2026-08-13 21Z.
+  </figcaption>
+</figure>
+
+<style>
+  .moisture-signals {
+    width: min(960px, calc(100vw - 32px));
+    margin: 28px 50% 42px;
+    transform: translateX(-50%);
+    color: var(--ink);
+    border-top: 3px solid var(--chart-cloud);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  header { padding: 18px 0 16px; }
+  h3 { max-width: 900px; margin: 0; font: 700 28px/1 var(--display); text-transform: uppercase; }
+  .signal-sequence { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid var(--rule); background: var(--surface); }
+  section { min-width: 0; display: grid; grid-template-rows: auto auto 190px auto; align-content: start; padding: 16px 18px 15px; }
+  section + section { border-left: 1px solid var(--rule); }
+  .signal-index { font: 700 12px var(--mono); color: var(--accent); }
+  h4 { margin: 4px 0 0; font: 700 17px/1.1 var(--display); text-transform: uppercase; }
+  .question { min-height: 54px; margin: 5px 0 0; font-size: 12px; line-height: 1.45; color: var(--ink-soft); }
+  .coverage-readout { align-self: center; }
+  .coverage-bar { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; height: 34px; }
+  .coverage-bar i { display: block; background: var(--surface); border: 1px solid var(--ink); }
+  .coverage-bar i.filled { background: var(--chart-cloud); }
+  .coverage-readout strong { display: block; margin-top: 12px; font: 700 48px/1 var(--display); color: var(--accent-strong); }
+  svg { display: block; width: 100%; height: 190px; }
+  .surface-line { stroke: var(--ink); stroke-width: 1.5; }
+  .small-label, .value-label, .altitude-label, .band-label { font-family: var(--mono); }
+  .small-label { fill: var(--ink-mute); font-size: 10.5px; letter-spacing: .04em; }
+  .parcel-path, .parcel-arrow { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; }
+  .parcel-dot { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+  .lcl-line { stroke: var(--chart-wind); stroke-width: 2; stroke-dasharray: 1 5; stroke-linecap: round; }
+  .parcel-cloud { stroke: var(--chart-wind); stroke-width: 1; }
+  .parcel-hatch { stroke: var(--chart-wind); stroke-width: 1.5; }
+  .value-label { fill: var(--ink); font-size: 12px; font-weight: 700; paint-order: stroke; stroke: var(--surface); stroke-width: 2px; }
+  .altitude-spine { stroke: var(--ink); stroke-width: 1.5; }
+  .altitude-label { fill: var(--ink-mute); font-size: 10px; }
+  .sampled-bed { fill: var(--chart-cloud); }
+  .sampled-hatch { stroke: var(--surface); stroke-width: 1.8; }
+  .sampled-band { stroke: var(--ink); stroke-width: 1; }
+  .band-label { fill: var(--surface); font-size: 10.5px; font-weight: 700; paint-order: stroke; stroke: var(--ink); stroke-width: 2px; }
+  .sample-node { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+  .limit { margin: 2px 0 0; font-size: 12px; line-height: 1.45; color: var(--ink-soft); }
+  .limit b { color: var(--ink); }
+  figcaption { padding: 10px 0 12px; font: 11.5px/1.5 var(--mono); color: var(--ink-mute); }
+  @media (max-width: 700px) {
+    h3 { font-size: 24px; }
+    .signal-sequence { grid-template-columns: 1fr; }
+    section { grid-template-columns: 36px minmax(0, 1fr); grid-template-rows: auto auto auto; gap: 0 10px; padding: 15px 12px 16px; }
+    section + section { border-left: 0; border-top: 1px solid var(--rule); }
+    .signal-index { grid-row: 1 / 4; }
+    .signal-copy { grid-column: 2; }
+    .question { min-height: 0; }
+    .coverage-readout, svg { grid-column: 2; margin-top: 12px; }
+    .coverage-readout { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 14px; }
+    .coverage-readout strong { margin: 0; font-size: 42px; }
+    svg { width: min(100%, 300px); height: auto; }
+    .limit { grid-column: 2; margin-top: 8px; }
+  }
+</style>

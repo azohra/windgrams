@@ -1,0 +1,141 @@
+---
+import Base from "../layouts/Base.astro";
+import { researchArticles, referenceDocs } from "../lib/research";
+
+const entries = researchArticles();
+const reference = referenceDocs();
+---
+
+<Base
+  title="Research — Windgrams"
+  description="Methods and evidence for deriving and reading soaring forecasts from weather-model data."
+  activeNav="research"
+>
+  <main class="shell home-shell">
+    <header class="research-header">
+      <h1>Articles</h1>
+    </header>
+
+    <section class="entries-section" aria-label="Research articles">
+      <ol class="entry-list">
+        {entries.map((entry) => (
+          <li>
+            <span class="entry-number">{entry.number}</span>
+            <div class="entry-copy">
+              <div class="entry-meta">{entry.section} · {entry.readingMinutes} min</div>
+              <h3><a href={entry.url}>{entry.title}</a></h3>
+              <p>{entry.summary}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="reference-section" aria-labelledby="reference-title">
+      <header class="section-head">
+        <h2 id="reference-title">Reference</h2>
+      </header>
+      {reference.map((doc) => (
+        <div class="reference-entry">
+          <span class="entry-number">{doc.number}</span>
+          <div class="entry-copy">
+            <div class="entry-meta">{doc.section} · {doc.readingMinutes} min</div>
+            <h3><a href={doc.url}>{doc.title}</a></h3>
+            <p>{doc.summary}</p>
+          </div>
+        </div>
+      ))}
+    </section>
+  </main>
+</Base>
+
+<style>
+  .home-shell {
+    max-width: 1100px;
+    padding-bottom: 40px;
+  }
+  .research-header {
+    position: relative;
+    padding: 54px 0 30px;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  .research-header::after {
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 116px;
+    height: 4px;
+    background: var(--accent);
+    content: "";
+  }
+  .research-header h1 {
+    margin: 0;
+    font-size: clamp(48px, 6vw, 68px);
+    line-height: .95;
+  }
+  .entries-section,
+  .reference-section {
+    padding: 38px 0;
+    border-top: 1px solid var(--rule-strong);
+  }
+  .entries-section {
+    padding-top: 0;
+    padding-bottom: 38px;
+    border-top: 0;
+  }
+  .section-head {
+    margin-bottom: 0;
+  }
+  .section-head h2 {
+    margin: 0;
+    font-size: 34px;
+    line-height: 1;
+  }
+  .entry-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 0;
+  }
+  .entry-list li,
+  .reference-entry {
+    display: grid;
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 24px;
+    padding: 22px 0 23px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .entry-number {
+    padding-top: 5px;
+    font: 700 42px/.9 var(--display);
+    color: var(--accent);
+  }
+  .entry-meta {
+    font: 11.5px/1.4 var(--mono);
+    letter-spacing: .045em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .entry-copy h3 {
+    margin: 6px 0 9px;
+    font-size: 28px;
+    line-height: 1.12;
+  }
+  .entry-copy h3 a { color: var(--ink); }
+  .entry-copy p {
+    max-width: 790px;
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+  .reference-section { padding-bottom: 26px; }
+  @media (max-width: 680px) {
+    .research-header { padding-top: 38px; }
+    .research-header h1 { font-size: 46px; }
+    .entry-list li,
+    .reference-entry { grid-template-columns: 48px minmax(0, 1fr); gap: 14px; }
+    .entry-number { font-size: 31px; }
+    .entry-copy h3 { font-size: 22px; }
+  }
+</style>

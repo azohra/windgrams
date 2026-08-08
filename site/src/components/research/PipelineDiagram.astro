@@ -1,0 +1,70 @@
+---
+const stages = [
+  { number: "1", title: "Upstream model products", detail: "ECCC or NOAA publishes a forecast cycle." },
+  { number: "2", title: "Completeness probe", detail: "Request the final required hour before fetching the run." },
+  { number: "3", title: "Per-model builder", detail: "Fetch required records; verify; derive; serialize." },
+  { number: "4", title: "Workflow commit", detail: "Commit every completed model directory and append one history record per site and run." },
+  { number: "5", title: "Browser read", detail: "Fetch manifest and profile; accept only a matching referenceTime." },
+];
+---
+
+<figure class="pipeline-diagram" aria-labelledby="pipeline-title pipeline-caption">
+  <header class="figure-heading">
+    <h3 id="pipeline-title">Publication flow from model cycle to browser</h3>
+  </header>
+
+  <ol class="publication-flow">
+    {stages.map((stage) => (
+      <li>
+        <span class="stage-number">{stage.number}</span>
+        <div class="stage-copy">
+          <strong>{stage.title}</strong>
+          <span>{stage.detail}</span>
+        </div>
+      </li>
+    ))}
+  </ol>
+
+  <div class="publication-boundary">
+    <span>Git repository publication</span>
+    <span>manifest.json · site profiles · append-only history</span>
+  </div>
+
+  <figcaption id="pipeline-caption">
+    Builders complete independently. Each polling cycle commits every finished model update once; browsers read static files from GitHub rather than a project API.
+  </figcaption>
+</figure>
+
+<style>
+  .pipeline-diagram {
+    width: min(980px, calc(100vw - 32px));
+    margin: 28px 50% 44px;
+    transform: translateX(-50%);
+    color: var(--ink);
+  }
+  .figure-heading { padding-bottom: 10px; border-bottom: 2px solid var(--ink); }
+  .figure-heading h3 { margin: 0; font-family: var(--sans); font-size: 18px; letter-spacing: 0; text-transform: none; }
+  .publication-flow { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin: 0; padding: 24px 0 18px; list-style: none; border-bottom: 1px solid var(--rule); }
+  .publication-flow::before { content: ""; position: absolute; top: 42px; left: 10%; right: 10%; border-top: 2px solid var(--rule-strong); }
+  .publication-flow li { position: relative; min-width: 0; padding: 0 11px; text-align: center; }
+  .stage-number { position: relative; z-index: 1; width: 38px; height: 38px; display: grid; place-items: center; margin: 0 auto 12px; border: 2px solid var(--rule-strong); border-radius: 50%; background: var(--surface); font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--ink); }
+  .publication-flow li:nth-child(4) .stage-number { border-color: var(--accent); background: var(--surface-accent); color: var(--accent-strong); }
+  .stage-copy { display: flex; flex-direction: column; gap: 5px; }
+  .stage-copy strong { font-family: var(--sans); font-size: 14px; line-height: 1.3; color: var(--ink); }
+  .stage-copy span { font-size: 13px; line-height: 1.4; color: var(--ink-soft); }
+  .publication-boundary { display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-bottom: 2px solid var(--ink); font-family: var(--mono); font-size: 12px; color: var(--ink-mute); }
+  .publication-boundary span:first-child { color: var(--accent-strong); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  figcaption { margin-top: 13px; font-family: var(--mono); font-size: 13px; line-height: 1.5; color: var(--ink-mute); }
+  @media (max-width: 680px) {
+    .publication-flow { grid-template-columns: 1fr; padding: 18px 0 8px; }
+    .publication-flow::before { top: 22px; bottom: 31px; left: 18px; right: auto; border-top: 0; border-left: 2px solid var(--rule-strong); }
+    .publication-flow li { min-height: 76px; display: grid; grid-template-columns: 50px 1fr; align-items: start; padding: 0; text-align: left; }
+    .stage-number { width: 38px; height: 38px; margin: 0; }
+    .stage-copy { padding: 0 0 14px 8px; }
+    .stage-copy strong { font-size: 15px; }
+    .stage-copy span { font-size: 13px; }
+    .publication-boundary { display: block; padding-block: 10px; }
+    .publication-boundary span { display: block; }
+    .publication-boundary span + span { margin-top: 4px; }
+  }
+</style>

@@ -1,0 +1,142 @@
+---
+import { MODELS } from "../../lib/models";
+
+function horizon(hours: number): string {
+  const days = hours / 24;
+  return Number.isInteger(days) ? `${days} d` : `${days.toFixed(1)} d`;
+}
+
+function cycles(intervalHours: number): string {
+  if (intervalHours === 6) return "00 / 06 / 12 / 18";
+  if (intervalHours === 12) return "00 / 12";
+  return `Every ${intervalHours} h`;
+}
+
+const rows = MODELS.map((m) => ({
+  name: m.shortLabel.split(" ")[0],
+  resolution: m.resolution,
+  cycles: cycles(m.runIntervalHours),
+  horizon: horizon(m.horizonHours),
+  status: m.experimental ? "Experimental feed" : m.ensemble ? "Publication pending" : "",
+}));
+---
+
+<div class="mc-grid">
+  <p class="scroll-hint" id="model-table-scroll-hint">Scroll horizontally to see all columns.</p>
+  <div
+    class="table-scroll"
+    role="region"
+    aria-label="Configured forecast model feeds"
+    aria-describedby="model-table-scroll-hint"
+    tabindex="0"
+  >
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Model</th>
+          <th scope="col">Resolution</th>
+          <th scope="col">Runs used (UTC)</th>
+          <th scope="col">Horizon</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          rows.map((r) => (
+            <tr>
+              <th scope="row">
+                <span class="mc-name">{r.name}</span>
+                {r.status && <span class="mc-status">{r.status}</span>}
+              </th>
+              <td class="mc-num">{r.resolution}</td>
+              <td class="mc-num">{r.cycles}</td>
+              <td class="mc-num">{r.horizon}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+  .mc-grid {
+    margin: 28px 0 40px;
+  }
+  .table-scroll:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+  .scroll-hint {
+    display: none;
+  }
+  table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    font-size: 15px;
+  }
+  thead th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    font-weight: 600;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+  tbody tr {
+    border-top: 1px solid var(--rule);
+  }
+  tbody th,
+  tbody td {
+    padding: 11px 14px;
+    color: var(--ink-soft);
+    font-weight: 400;
+    vertical-align: baseline;
+  }
+  tbody th {
+    text-align: left;
+    font-family: var(--display);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .mc-name {
+    display: block;
+  }
+  .mc-status {
+    display: block;
+    margin-top: 3px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--ink-mute);
+  }
+  .mc-num {
+    font-family: var(--mono);
+    font-size: 13.5px;
+    white-space: nowrap;
+  }
+  @media (max-width: 640px) {
+    .scroll-hint {
+      display: block;
+      margin: 0 0 8px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: var(--ink-mute);
+    }
+    .table-scroll {
+      overflow-x: auto;
+      overscroll-behavior-inline: contain;
+    }
+  }
+</style>

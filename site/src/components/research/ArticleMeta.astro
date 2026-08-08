@@ -1,0 +1,48 @@
+---
+import type { DocPage } from "../../lib/research";
+
+interface Props {
+  doc: DocPage;
+}
+
+const { doc } = Astro.props;
+const kindLabel = doc.kind === "reference" ? "Reference" : "Entry";
+---
+
+<div class={`article-meta accent-${doc.accent}`}>
+  <span class="article-number">{kindLabel} {doc.number}</span>
+  <span>{doc.section}</span>
+  <span>{doc.readingMinutes} min read</span>
+</div>
+
+<style>
+  .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 22px 0 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.065em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .article-meta span + span::before {
+    content: "/";
+    margin-right: 10px;
+    color: var(--rule-strong);
+  }
+  .article-number {
+    color: var(--entry-accent, var(--accent));
+  }
+  .accent-amber { --entry-accent: var(--accent); }
+  .accent-blue { --entry-accent: var(--model-1); }
+  .accent-green { --entry-accent: var(--model-3); }
+  .accent-red { --entry-accent: var(--lapse-hot); }
+  @media (max-width: 520px) {
+    .article-meta {
+      flex-wrap: wrap;
+      row-gap: 3px;
+    }
+  }
+</style>

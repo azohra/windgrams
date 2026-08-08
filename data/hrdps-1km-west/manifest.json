@@ -1,0 +1,32 @@
+{
+  "firstForecastHour": 2,
+  "forecastHours": 30,
+  "generatedAt": "2026-08-07T19:44:56.913Z",
+  "lastForecastHour": 40,
+  "model": "HRDPS West 1 km",
+  "referenceTime": "2026-08-07T12:00:00Z",
+  "sites": [
+    {
+      "name": "Dundee",
+      "slug": "dundee"
+    },
+    {
+      "name": "Erie",
+      "slug": "erie"
+    },
+    {
+      "name": "Flagpole",
+      "slug": "flagpole"
+    },
+    {
+      "name": "Red Mtn",
+      "slug": "red-mountain"
+    }
+  ],
+  "stats": {
+    "downloadBytes": 1206198233,
+    "downloads": 1621,
+    "durationMs": 475397,
+    "retries": 0
+  }
+}

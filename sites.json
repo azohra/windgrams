@@ -1,0 +1,30 @@
+[
+  {
+    "slug": "dundee",
+    "name": "Dundee",
+    "latitude": 49.291977,
+    "longitude": -117.183569,
+    "elevationM": 1485
+  },
+  {
+    "slug": "erie",
+    "name": "Erie",
+    "latitude": 49.204789,
+    "longitude": -117.406951,
+    "elevationM": 1247
+  },
+  {
+    "slug": "flagpole",
+    "name": "Flagpole",
+    "latitude": 49.507695,
+    "longitude": -117.310423,
+    "elevationM": 1222
+  },
+  {
+    "slug": "red-mountain",
+    "name": "Red Mtn",
+    "latitude": 49.091868,
+    "longitude": -117.820838,
+    "elevationM": 1591
+  }
+]
