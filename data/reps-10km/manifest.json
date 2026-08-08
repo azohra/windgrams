@@ -1,11 +1,11 @@
 {
-  "firstForecastHour": 15,
-  "forecastHours": 14,
-  "generatedAt": "2026-08-08T04:58:33.354Z",
-  "lastForecastHour": 72,
+  "firstForecastHour": 9,
+  "forecastHours": 15,
+  "generatedAt": "2026-08-08T10:04:27.694Z",
+  "lastForecastHour": 69,
   "memberCount": 21,
   "model": "REPS 10 km",
-  "referenceTime": "2026-08-08T00:00:00Z",
+  "referenceTime": "2026-08-08T06:00:00Z",
   "sites": [
     {
       "name": "Dundee",
@@ -25,12 +25,12 @@
     }
   ],
   "stats": {
-    "downloadBytes": 1468248767,
+    "downloadBytes": 1575267466,
     "downloadRetries": 2,
-    "downloads": 142,
-    "durationMs": 675079,
-    "geoMetRequests": 5680,
-    "geoMetResponseBytes": 20876940,
-    "geoMetRetries": 10
+    "downloads": 152,
+    "durationMs": 621312,
+    "geoMetRequests": 6084,
+    "geoMetResponseBytes": 22346058,
+    "geoMetRetries": 15
   }
 }
