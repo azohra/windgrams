@@ -1,10 +1,10 @@
 {
-  "firstForecastHour": 8,
+  "firstForecastHour": 2,
   "forecastHours": 30,
-  "generatedAt": "2026-08-08T08:29:14.831Z",
-  "lastForecastHour": 46,
+  "generatedAt": "2026-08-08T14:03:40.751Z",
+  "lastForecastHour": 40,
   "model": "HRRR CONUS 3 km",
-  "referenceTime": "2026-08-08T06:00:00Z",
+  "referenceTime": "2026-08-08T12:00:00Z",
   "sites": [
     {
       "name": "Dundee",
@@ -24,9 +24,9 @@
     }
   ],
   "stats": {
-    "downloadBytes": 1329567235,
+    "downloadBytes": 1329128175,
     "downloads": 1651,
-    "durationMs": 65578,
+    "durationMs": 52843,
     "retries": 0
   }
 }
