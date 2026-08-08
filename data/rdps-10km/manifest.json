@@ -1,10 +1,10 @@
 {
-  "firstForecastHour": 8,
-  "forecastHours": 50,
-  "generatedAt": "2026-08-08T09:53:57.758Z",
+  "firstForecastHour": 2,
+  "forecastHours": 56,
+  "generatedAt": "2026-08-08T15:53:49.672Z",
   "lastForecastHour": 84,
   "model": "RDPS regional 10 km",
-  "referenceTime": "2026-08-08T06:00:00Z",
+  "referenceTime": "2026-08-08T12:00:00Z",
   "sites": [
     {
       "name": "Dundee",
@@ -24,9 +24,9 @@
     }
   ],
   "stats": {
-    "durationMs": 169920,
-    "geoMetRequests": 2702,
-    "geoMetResponseBytes": 9962512,
+    "durationMs": 105449,
+    "geoMetRequests": 3026,
+    "geoMetResponseBytes": 11155480,
     "geoMetRetries": 0
   }
 }
